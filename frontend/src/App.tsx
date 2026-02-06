@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { Home, User, MessageCircle, PlusCircle } from 'lucide-react';
 import { TelegramProvider, useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
+import { chatsApi } from '@/lib/api';
 import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
 import CreateListingPage from '@/pages/CreateListingPage';
 import ListingDetailPage from '@/pages/ListingDetailPage';
+import ChatsPage from '@/pages/ChatsPage';
+import ChatRoomPage from '@/pages/ChatRoomPage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
-type PageType = 'main' | 'create' | 'listing' | 'chat';
+type PageType = 'main' | 'create' | 'listing' | 'chat-room';
 
 interface PageState {
   type: PageType;
   listingId?: string;
-  sellerId?: string;
+  chatId?: string;
 }
 
 function AppContent() {
@@ -59,11 +62,20 @@ function AppContent() {
     setPage({ type: 'listing', listingId });
   };
 
-  const handleOpenChat = (listingId: string, sellerId: string) => {
-    setPage({ type: 'chat', listingId, sellerId });
-    // For now, just switch to messages tab
-    setActiveTab('messages');
-    setPage({ type: 'main' });
+  const handleOpenChat = async (listingId: string, _sellerId: string) => {
+    haptic.impact('medium');
+    try {
+      // Create or get existing chat
+      const chat = await chatsApi.create(listingId);
+      setPage({ type: 'chat-room', chatId: chat.id });
+      setActiveTab('messages');
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+    }
+  };
+
+  const handleOpenChatRoom = (chatId: string) => {
+    setPage({ type: 'chat-room', chatId });
   };
 
   const handleBack = () => {
@@ -90,14 +102,13 @@ function AppContent() {
     );
   }
 
-  // Render pages
+  // Render special pages
   if (page.type === 'create') {
     return (
       <CreateListingPage
         onBack={handleBack}
         onSuccess={() => {
           handleBack();
-          // Refresh home
           setActiveTab('home');
         }}
       />
@@ -110,6 +121,18 @@ function AppContent() {
         listingId={page.listingId}
         onBack={handleBack}
         onChat={handleOpenChat}
+      />
+    );
+  }
+
+  if (page.type === 'chat-room' && page.chatId) {
+    return (
+      <ChatRoomPage
+        chatId={page.chatId}
+        onBack={() => {
+          setPage({ type: 'main' });
+        }}
+        onOpenListing={handleOpenListing}
       />
     );
   }
@@ -127,11 +150,7 @@ function AppContent() {
           />
         )}
         {activeTab === 'messages' && (
-          <div className="flex flex-col items-center justify-center min-h-screen p-6">
-            <p className="text-5xl mb-4">💬</p>
-            <p className="text-tg-text font-medium">መልእክቶች</p>
-            <p className="text-tg-hint text-sm mt-1">Coming soon: Chat with buyers & sellers</p>
-          </div>
+          <ChatsPage onOpenChat={handleOpenChatRoom} />
         )}
       </main>
 

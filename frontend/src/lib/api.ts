@@ -210,6 +210,71 @@ export interface ListingsResponse {
   has_more: boolean;
 }
 
+// Chat types
+export interface ChatListItem {
+  id: string;
+  listing_id: string;
+  listing_title: string;
+  listing_image: string | null;
+  listing_price: number;
+  other_user_id: string;
+  other_user_name: string;
+  other_user_verified: boolean;
+  last_message: string | null;
+  last_message_at: string | null;
+  unread_count: number;
+  is_seller: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  chat_id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string | null;
+  image_url: string | null;
+  is_read: boolean;
+  created_at: string;
+  is_mine: boolean;
+}
+
+export interface ChatDetail {
+  id: string;
+  listing_id: string;
+  listing_title: string;
+  listing_image: string | null;
+  listing_price: number;
+  listing_status: string;
+  other_user_id: string;
+  other_user_name: string;
+  other_user_verified: boolean;
+  is_seller: boolean;
+  messages: ChatMessage[];
+}
+
+// Chats API
+export const chatsApi = {
+  list: () => request<ChatListItem[]>('/chats'),
+  
+  create: (listingId: string) =>
+    request<ChatDetail>(`/chats?listing_id=${listingId}`, {
+      method: 'POST',
+    }),
+  
+  get: (chatId: string) => request<ChatDetail>(`/chats/${chatId}`),
+  
+  sendMessage: (chatId: string, text: string) =>
+    request<ChatMessage>(`/chats/${chatId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+  
+  getMessages: (chatId: string, after?: string) => {
+    const params = after ? `?after=${encodeURIComponent(after)}` : '';
+    return request<ChatMessage[]>(`/chats/${chatId}/messages${params}`);
+  },
+};
+
 export interface CreateListing {
   title: string;
   description?: string;
