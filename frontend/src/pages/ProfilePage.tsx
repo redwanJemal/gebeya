@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { 
   ArrowLeft, Phone, MapPin, Star, Package, 
   ShoppingBag, Heart, Settings, LogOut, 
-  CheckCircle, AlertCircle, ChevronRight, Smartphone
+  CheckCircle, AlertCircle, ChevronRight, Smartphone, Lock
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi, setAccessToken } from '@/lib/api';
 import { ProfileSkeleton } from '@/components/Skeleton';
+import { PasscodeSettings } from '@/components/PasscodeLock';
 
 interface ProfilePageProps {
   onBack?: () => void;
@@ -21,6 +22,7 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites 
   const [verifying, setVerifying] = useState(false);
   const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
+  const [showPasscodeSettings, setShowPasscodeSettings] = useState(false);
 
   const handleVerifyPhone = async () => {
     haptic.impact('medium');
@@ -237,6 +239,12 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites 
           onClick={() => alert('Coming soon: Change Location')}
         />
         <MenuItem
+          icon={<Lock className="w-5 h-5" />}
+          label={user?.has_passcode ? "ኮድ ቀይር / Change Passcode" : "ኮድ አክል / Set Passcode"}
+          value={user?.has_passcode ? "✓" : undefined}
+          onClick={() => setShowPasscodeSettings(true)}
+        />
+        <MenuItem
           icon={<Settings className="w-5 h-5" />}
           label="ቅንብሮች / Settings"
           onClick={() => alert('ብዙም ሳይቆይ / Coming soon')}
@@ -274,6 +282,18 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites 
             <p>Admin: ✅</p>
           </div>
         </div>
+      )}
+
+      {/* Passcode Settings Modal */}
+      {showPasscodeSettings && (
+        <PasscodeSettings
+          hasPasscode={user.has_passcode || false}
+          onClose={() => setShowPasscodeSettings(false)}
+          onSuccess={() => {
+            setShowPasscodeSettings(false);
+            refreshUser();
+          }}
+        />
       )}
     </div>
   );

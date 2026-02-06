@@ -1,13 +1,19 @@
 """User endpoints."""
 
+import hashlib
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.api.deps import CurrentUser
 from app.core.config import settings
 from app.models.user import User
+
+
+def hash_passcode(passcode: str, salt: str) -> str:
+    """Hash a passcode with salt."""
+    return hashlib.sha256(f"{passcode}:{salt}".encode()).hexdigest()
 
 router = APIRouter()
 
@@ -31,6 +37,8 @@ class UserResponse(BaseModel):
     total_listings: int
     is_verified_seller: bool
     is_admin: bool = False
+    has_passcode: bool = False
+    settings: dict = {}
 
     class Config:
         from_attributes = True
@@ -56,6 +64,8 @@ def user_to_response(user: User) -> UserResponse:
         total_listings=user.total_listings,
         is_verified_seller=user.is_verified_seller,
         is_admin=user.telegram_id in settings.admin_ids,
+        has_passcode=user.passcode_hash is not None,
+        settings=user.settings or {},
     )
 
 
@@ -133,3 +143,78 @@ async def update_settings(
     user.settings = current_settings
 
     return user_to_response(user)
+
+
+# --- Passcode endpoints ---
+
+class SetPasscodeRequest(BaseModel):
+    """Request to set/update passcode."""
+    passcode: str = Field(..., min_length=4, max_length=6, pattern=r"^\d+$")
+
+
+class VerifyPasscodeRequest(BaseModel):
+    """Request to verify passcode."""
+    passcode: str = Field(..., min_length=4, max_length=6, pattern=r"^\d+$")
+
+
+class PasscodeResponse(BaseModel):
+    """Passcode operation response."""
+    success: bool
+    message: str
+
+
+@router.post("/me/passcode", response_model=PasscodeResponse)
+async def set_passcode(
+    body: SetPasscodeRequest,
+    user: CurrentUser,
+):
+    """Set or update passcode for app lock."""
+    # Hash passcode with user's telegram_id as salt
+    salt = str(user.telegram_id)
+    user.passcode_hash = hash_passcode(body.passcode, salt)
+    
+    return PasscodeResponse(
+        success=True,
+        message="Passcode set successfully"
+    )
+
+
+@router.post("/me/passcode/verify", response_model=PasscodeResponse)
+async def verify_passcode(
+    body: VerifyPasscodeRequest,
+    user: CurrentUser,
+):
+    """Verify passcode."""
+    if not user.passcode_hash:
+        raise HTTPException(status_code=400, detail="No passcode set")
+    
+    salt = str(user.telegram_id)
+    if hash_passcode(body.passcode, salt) != user.passcode_hash:
+        raise HTTPException(status_code=401, detail="Invalid passcode")
+    
+    return PasscodeResponse(
+        success=True,
+        message="Passcode verified"
+    )
+
+
+@router.delete("/me/passcode", response_model=PasscodeResponse)
+async def remove_passcode(
+    body: VerifyPasscodeRequest,
+    user: CurrentUser,
+):
+    """Remove passcode (requires current passcode)."""
+    if not user.passcode_hash:
+        raise HTTPException(status_code=400, detail="No passcode set")
+    
+    # Verify current passcode first
+    salt = str(user.telegram_id)
+    if hash_passcode(body.passcode, salt) != user.passcode_hash:
+        raise HTTPException(status_code=401, detail="Invalid passcode")
+    
+    user.passcode_hash = None
+    
+    return PasscodeResponse(
+        success=True,
+        message="Passcode removed"
+    )

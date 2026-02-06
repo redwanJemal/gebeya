@@ -51,6 +51,9 @@ class User(Base):
     # App-specific data
     settings: Mapped[dict] = mapped_column(JSONB, default=dict)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
+    
+    # Security
+    passcode_hash: Mapped[str | None] = mapped_column(String(255))  # Hashed PIN
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

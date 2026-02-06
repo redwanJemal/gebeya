@@ -73,6 +73,25 @@ export const usersApi = {
       method: 'PATCH',
       body: JSON.stringify({ settings }),
     }),
+  
+  // Passcode
+  setPasscode: (passcode: string) =>
+    request<{ success: boolean }>('/users/me/passcode', {
+      method: 'POST',
+      body: JSON.stringify({ passcode }),
+    }),
+  
+  verifyPasscode: (passcode: string) =>
+    request<{ success: boolean }>('/users/me/passcode/verify', {
+      method: 'POST',
+      body: JSON.stringify({ passcode }),
+    }),
+  
+  removePasscode: (passcode: string) =>
+    request<{ success: boolean }>('/users/me/passcode', {
+      method: 'DELETE',
+      body: JSON.stringify({ passcode }),
+    }),
 };
 
 // Categories API
@@ -155,6 +174,7 @@ export interface User {
   total_listings: number;
   is_verified_seller: boolean;
   is_admin: boolean;
+  has_passcode?: boolean;
   settings?: Record<string, any>;
 }
 
