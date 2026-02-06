@@ -58,8 +58,8 @@ function AppContent() {
 
       {/* Bottom Navigation */}
       {isAuthenticated && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-tg-secondary-bg border-t border-tg-hint/10 px-2 py-1 z-50">
-          <div className="flex justify-around items-center">
+        <nav className="fixed bottom-0 left-0 right-0 bg-tg-secondary-bg border-t border-tg-hint/10 px-2 pt-1 pb-safe z-50">
+          <div className="flex justify-around items-center pb-2">
             <NavItem
               icon={<Home className="w-6 h-6" />}
               label="ዋና"

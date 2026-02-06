@@ -105,7 +105,7 @@ async def list_listings(
 ):
     """List active listings with filters."""
     query = select(Listing).where(
-        Listing.status == ListingStatus.ACTIVE,
+        Listing.status == "active",
         Listing.city == city,
     ).options(selectinload(Listing.user))
     

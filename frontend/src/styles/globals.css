@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area for iOS/Telegram */
+:root {
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
 :root {
   /* Fallback colors if not in Telegram */
   --tg-theme-bg-color: #ffffff;

@@ -92,7 +92,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-tg-bg px-4 py-3 border-b border-tg-secondary-bg">
         <div className="flex items-center gap-3">

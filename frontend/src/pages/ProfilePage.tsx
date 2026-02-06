@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
-import { setAccessToken } from '@/lib/api';
+import { usersApi, setAccessToken } from '@/lib/api';
 
 interface ProfilePageProps {
   onBack?: () => void;
@@ -16,32 +16,54 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   const { webApp, haptic } = useTelegram();
   const { user, refreshUser } = useAuth();
   const [verifying, setVerifying] = useState(false);
+  const [showPhoneInput, setShowPhoneInput] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
 
   const handleVerifyPhone = async () => {
-    if (!webApp || !webApp.requestContact) {
-      alert('Phone verification is only available in Telegram');
-      return;
+    haptic.impact('medium');
+    
+    // Try Telegram's requestContact first
+    if (webApp?.requestContact) {
+      setVerifying(true);
+      try {
+        webApp.requestContact((sent: boolean) => {
+          if (sent) {
+            haptic.notification('success');
+            // Contact sent to bot - show manual input as backup
+            setShowPhoneInput(true);
+          } else {
+            haptic.notification('error');
+          }
+          setVerifying(false);
+        });
+      } catch (error) {
+        console.error('requestContact failed:', error);
+        setShowPhoneInput(true);
+        setVerifying(false);
+      }
+    } else {
+      // Fallback to manual input
+      setShowPhoneInput(true);
     }
+  };
+
+  const handleSubmitPhone = async () => {
+    if (!phoneInput.trim()) return;
     
     haptic.impact('medium');
     setVerifying(true);
-
+    
     try {
-      // Request contact from Telegram
-      webApp.requestContact((sent: boolean) => {
-        if (sent) {
-          // Contact will be sent via WebApp.initDataUnsafe.user after callback
-          // For now, show a message
-          haptic.notification('success');
-          alert('ስልክዎ ተረጋግጧል! / Phone verified!');
-          refreshUser();
-        } else {
-          haptic.notification('error');
-        }
-        setVerifying(false);
-      });
+      await usersApi.verifyPhone(phoneInput.trim());
+      haptic.notification('success');
+      await refreshUser();
+      setShowPhoneInput(false);
+      setPhoneInput('');
     } catch (error) {
-      console.error('Failed to request contact:', error);
+      console.error('Phone verification failed:', error);
+      haptic.notification('error');
+      alert('ስልክ ቁጥር ማረጋገጥ አልተሳካም / Phone verification failed');
+    } finally {
       setVerifying(false);
     }
   };
@@ -61,7 +83,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <div className="bg-tg-secondary-bg px-4 py-4">
         {onBack && (
@@ -135,13 +157,54 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
               <p className="text-xs text-tg-hint mt-0.5">
                 Verify your phone to start selling
               </p>
-              <button
-                onClick={handleVerifyPhone}
-                disabled={verifying}
-                className="mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-              >
-                {verifying ? 'እየተጫነ...' : '📱 ስልክ አጋራ / Share Phone'}
-              </button>
+              
+              {showPhoneInput ? (
+                <div className="mt-3 space-y-2">
+                  <input
+                    type="tel"
+                    placeholder="09xxxxxxxx"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    className="w-full px-4 py-2 bg-tg-bg border border-tg-hint/20 rounded-lg text-tg-text placeholder:text-tg-hint focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSubmitPhone}
+                      disabled={verifying || !phoneInput.trim()}
+                      className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                    >
+                      {verifying ? 'እየተጫነ...' : 'አረጋግጥ / Verify'}
+                    </button>
+                    <button
+                      onClick={() => setShowPhoneInput(false)}
+                      className="px-4 py-2 bg-tg-secondary-bg text-tg-hint rounded-lg text-sm"
+                    >
+                      ሰርዝ
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleVerifyPhone}
+                  disabled={verifying}
+                  className="mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {verifying ? 'እየተጫነ...' : '📱 ስልክ አረጋግጥ / Verify Phone'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verified Phone Display */}
+      {user.is_phone_verified && user.phone && (
+        <div className="mx-4 mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-green-500" />
+            <div>
+              <p className="text-sm font-medium text-tg-text">ስልክ ተረጋግጧል</p>
+              <p className="text-tg-hint">{user.phone}</p>
             </div>
           </div>
         </div>
