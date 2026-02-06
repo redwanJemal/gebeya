@@ -18,10 +18,26 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch data on mount
+  // Fetch data on mount + auto-seed if admin
   useEffect(() => {
-    loadData();
-  }, []);
+    const init = async () => {
+      await loadData();
+      
+      // Auto-seed for admin if no listings
+      if (user?.is_admin && listings.length === 0) {
+        try {
+          const result = await demoApi.autoSeed();
+          if (result.seeded) {
+            console.log('Auto-seeded demo listings:', result.count);
+            await loadData(); // Reload
+          }
+        } catch (e) {
+          console.log('Auto-seed skipped');
+        }
+      }
+    };
+    init();
+  }, [user?.is_admin]);
 
   // Refetch when category changes
   useEffect(() => {
@@ -160,15 +176,7 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
       {/* Listings Grid */}
       <div className="px-4">
         {listings.length === 0 ? (
-          <EmptyState onSeedDemo={async () => {
-            haptic.impact('medium');
-            try {
-              await demoApi.seedListings();
-              await loadData();
-            } catch (e) {
-              console.error('Failed to seed:', e);
-            }
-          }} isAdmin={user?.is_admin || false} />
+          <EmptyState />
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {listings.map((listing) => (
@@ -293,36 +301,15 @@ function ListingCard({ listing, formatPrice, getTimeAgo, onOpen }: ListingCardPr
   );
 }
 
-interface EmptyStateProps {
-  onSeedDemo: () => Promise<void>;
-  isAdmin: boolean;
-}
-
-function EmptyState({ onSeedDemo, isAdmin }: EmptyStateProps) {
-  const [seeding, setSeeding] = useState(false);
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    await onSeedDemo();
-    setSeeding(false);
-  };
-
+function EmptyState() {
   return (
     <div className="text-center py-12">
       <p className="text-5xl mb-4">📦</p>
       <p className="text-tg-text text-lg font-medium">ምንም ዕቃ አልተገኘም</p>
       <p className="text-tg-hint text-sm mt-1">No listings yet</p>
-      
-      {/* Admin only: Seed demo button */}
-      {isAdmin && (
-        <button
-          onClick={handleSeed}
-          disabled={seeding}
-          className="mt-6 px-6 py-3 bg-tg-button text-tg-button-text rounded-xl font-medium disabled:opacity-50"
-        >
-          {seeding ? '🔄 Loading...' : '✨ Add Demo Listings'}
-        </button>
-      )}
+      <p className="text-tg-hint text-xs mt-4">
+        ዕቃ ለመሸጥ "ሽያጭ" ትርን ይጫኑ
+      </p>
     </div>
   );
 }

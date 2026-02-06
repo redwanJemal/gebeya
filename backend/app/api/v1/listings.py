@@ -101,6 +101,7 @@ async def list_listings(
     max_price: float | None = None,
     condition: ListingCondition | None = None,
     city: str = "Addis Ababa",
+    seed: bool = False,  # Auto-seed param
     db: AsyncSession = Depends(get_db),
 ):
     """List active listings with filters."""
@@ -188,18 +189,21 @@ async def create_listing(
             detail="ስልክ ቁጥርዎን ያረጋግጡ / Please verify your phone number to post listings"
         )
     
+    # Normalize condition to lowercase
+    condition_value = body.condition.value if hasattr(body.condition, 'value') else str(body.condition).lower()
+    
     listing = Listing(
         user_id=user.id,
         category_id=UUID(body.category_id),
         title=body.title,
         description=body.description,
         price=body.price,
-        condition=body.condition,
+        condition=condition_value,
         is_negotiable=body.is_negotiable,
         city=body.city,
         area=body.area,
         images=body.images,
-        status=ListingStatus.ACTIVE,
+        status="active",
         expires_at=datetime.now(UTC) + timedelta(days=30),
     )
     db.add(listing)

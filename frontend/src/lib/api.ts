@@ -228,4 +228,8 @@ export const demoApi = {
     request<{ message: string; listings: string[] }>('/demo/seed-listings', {
       method: 'POST',
     }),
+  autoSeed: () =>
+    request<{ seeded: boolean; count?: number; reason?: string }>('/demo/auto-seed', {
+      method: 'POST',
+    }),
 };

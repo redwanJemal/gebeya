@@ -3,14 +3,63 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.listing import Listing
 
 router = APIRouter()
+
+
+@router.post("/auto-seed")
+async def auto_seed_if_empty(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Auto-seed demo listings if marketplace is empty. Admin only."""
+    # Only admins can trigger
+    if user.telegram_id not in settings.admin_ids:
+        return {"seeded": False, "reason": "not_admin"}
+    
+    # Check if any listings exist
+    count_result = await db.execute(select(func.count()).select_from(Listing))
+    count = count_result.scalar() or 0
+    
+    if count > 0:
+        return {"seeded": False, "reason": "listings_exist", "count": count}
+    
+    # Seed demo listings
+    created = []
+    for item in DEMO_LISTINGS:
+        category_id = CATEGORY_IDS.get(item["category_slug"])
+        if not category_id:
+            continue
+
+        listing = Listing(
+            user_id=user.id,
+            category_id=uuid.UUID(category_id),
+            title=item["title"],
+            description=item["description"],
+            price=item["price"],
+            condition=item["condition"],
+            is_negotiable=True,
+            city="Addis Ababa",
+            area=item.get("area"),
+            images=item.get("images", []),
+            status="active",
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+        )
+        db.add(listing)
+        created.append(item["title"])
+
+    user.total_listings += len(created)
+    await db.commit()
+
+    return {"seeded": True, "count": len(created), "listings": created}
 
 # Sample demo listings
 DEMO_LISTINGS = [
@@ -121,6 +170,13 @@ async def seed_demo_listings(
     db: AsyncSession = Depends(get_db),
 ):
     """Seed demo listings for the current user."""
+    from app.core.config import settings
+    
+    # Only admins can seed
+    if user.telegram_id not in settings.admin_ids:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Admin only")
+    
     created = []
 
     for item in DEMO_LISTINGS:
