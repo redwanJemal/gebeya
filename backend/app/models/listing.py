@@ -15,18 +15,18 @@ from app.core.database import Base
 
 
 class ListingStatus(str, enum.Enum):
-    DRAFT = "draft"
-    ACTIVE = "active"
-    SOLD = "sold"
-    EXPIRED = "expired"
-    DELETED = "deleted"
+    draft = "draft"
+    active = "active"
+    sold = "sold"
+    expired = "expired"
+    deleted = "deleted"
 
 
 class ListingCondition(str, enum.Enum):
-    NEW = "new"
-    LIKE_NEW = "like_new"
-    USED = "used"
-    FOR_PARTS = "for_parts"
+    new = "new"
+    like_new = "like_new"
+    used = "used"
+    for_parts = "for_parts"
 
 
 class Listing(Base):
@@ -59,7 +59,7 @@ class Listing(Base):
     
     # Condition
     condition: Mapped[ListingCondition] = mapped_column(
-        Enum(ListingCondition), default=ListingCondition.USED
+        Enum(ListingCondition), default=ListingCondition.used
     )
     
     # Images (URLs)
@@ -73,7 +73,7 @@ class Listing(Base):
     
     # Status
     status: Mapped[ListingStatus] = mapped_column(
-        Enum(ListingStatus), default=ListingStatus.ACTIVE, index=True
+        Enum(ListingStatus), default=ListingStatus.active, index=True
     )
     
     # Stats

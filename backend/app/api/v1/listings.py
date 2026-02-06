@@ -27,7 +27,7 @@ class ListingCreate(BaseModel):
     description: str | None = None
     price: float = Field(..., gt=0)
     category_id: str
-    condition: ListingCondition = ListingCondition.USED
+    condition: ListingCondition = ListingCondition.used
     is_negotiable: bool = True
     city: str = "Addis Ababa"
     area: str | None = None
@@ -105,8 +105,10 @@ async def list_listings(
     db: AsyncSession = Depends(get_db),
 ):
     """List active listings with filters."""
+    from sqlalchemy import text
+    
     query = select(Listing).where(
-        Listing.status == "active",
+        Listing.status == ListingStatus.active,
         Listing.city == city,
     ).options(selectinload(Listing.user))
     
@@ -255,7 +257,7 @@ async def my_listings(
     if status:
         query = query.where(Listing.status == status)
     else:
-        query = query.where(Listing.status != ListingStatus.DELETED)
+        query = query.where(Listing.status != ListingStatus.deleted)
     
     query = query.order_by(Listing.created_at.desc())
     
@@ -357,7 +359,7 @@ async def update_listing(
         setattr(listing, field, value)
     
     # Handle sold status
-    if body.status == ListingStatus.SOLD:
+    if body.status == ListingStatus.sold:
         listing.sold_at = datetime.now(UTC)
         user.total_sales += 1
     
@@ -399,7 +401,7 @@ async def delete_listing(
     if listing.user_id != user.id:
         raise HTTPException(status_code=403, detail="Not your listing")
     
-    listing.status = ListingStatus.DELETED
+    listing.status = ListingStatus.deleted
     
     return {"message": "Listing deleted"}
 
