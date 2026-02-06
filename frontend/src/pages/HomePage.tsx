@@ -4,7 +4,11 @@ import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi, listingsApi, demoApi, type Category, type Listing } from '@/lib/api';
 
-export default function HomePage() {
+interface HomePageProps {
+  onOpenListing?: (listingId: string) => void;
+}
+
+export default function HomePage({ onOpenListing }: HomePageProps) {
   const { haptic } = useTelegram();
   const { user, isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -168,7 +172,13 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} formatPrice={formatPrice} getTimeAgo={getTimeAgo} />
+              <ListingCard 
+                key={listing.id} 
+                listing={listing} 
+                formatPrice={formatPrice} 
+                getTimeAgo={getTimeAgo}
+                onOpen={() => onOpenListing?.(listing.id)}
+              />
             ))}
           </div>
         )}
@@ -195,9 +205,10 @@ interface ListingCardProps {
   listing: Listing;
   formatPrice: (price: number) => string;
   getTimeAgo: (date: string) => string;
+  onOpen: () => void;
 }
 
-function ListingCard({ listing, formatPrice, getTimeAgo }: ListingCardProps) {
+function ListingCard({ listing, formatPrice, getTimeAgo, onOpen }: ListingCardProps) {
   const { haptic } = useTelegram();
   const [isFavorited, setIsFavorited] = useState(listing.is_favorited || false);
 
@@ -215,8 +226,7 @@ function ListingCard({ listing, formatPrice, getTimeAgo }: ListingCardProps) {
 
   const handleClick = () => {
     haptic.selection();
-    // TODO: Navigate to listing detail
-    alert(`View listing: ${listing.title}`);
+    onOpen();
   };
 
   return (

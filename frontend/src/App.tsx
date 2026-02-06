@@ -5,13 +5,23 @@ import { useAuth } from '@/hooks/useAuth';
 import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
+import CreateListingPage from '@/pages/CreateListingPage';
+import ListingDetailPage from '@/pages/ListingDetailPage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
+type PageType = 'main' | 'create' | 'listing' | 'chat';
+
+interface PageState {
+  type: PageType;
+  listingId?: string;
+  sellerId?: string;
+}
 
 function AppContent() {
   const { isLoading, isAuthenticated, error } = useAuth();
   const { haptic, isInTelegram } = useTelegram();
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [page, setPage] = useState<PageState>({ type: 'main' });
 
   // Block access outside Telegram (except in dev)
   const isDev = import.meta.env.DEV;
@@ -42,6 +52,22 @@ function AppContent() {
   const handleTabChange = (tab: TabType) => {
     haptic.selection();
     setActiveTab(tab);
+    setPage({ type: 'main' });
+  };
+
+  const handleOpenListing = (listingId: string) => {
+    setPage({ type: 'listing', listingId });
+  };
+
+  const handleOpenChat = (listingId: string, sellerId: string) => {
+    setPage({ type: 'chat', listingId, sellerId });
+    // For now, just switch to messages tab
+    setActiveTab('messages');
+    setPage({ type: 'main' });
+  };
+
+  const handleBack = () => {
+    setPage({ type: 'main' });
   };
 
   if (isLoading) {
@@ -64,26 +90,53 @@ function AppContent() {
     );
   }
 
+  // Render pages
+  if (page.type === 'create') {
+    return (
+      <CreateListingPage
+        onBack={handleBack}
+        onSuccess={() => {
+          handleBack();
+          // Refresh home
+          setActiveTab('home');
+        }}
+      />
+    );
+  }
+
+  if (page.type === 'listing' && page.listingId) {
+    return (
+      <ListingDetailPage
+        listingId={page.listingId}
+        onBack={handleBack}
+        onChat={handleOpenChat}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-tg-bg text-tg-text">
       {/* Main Content */}
-      <main className="pb-16">
-        {activeTab === 'home' && <HomePage />}
+      <main className="pb-20">
+        {activeTab === 'home' && <HomePage onOpenListing={handleOpenListing} />}
         {activeTab === 'profile' && <ProfilePage />}
         {activeTab === 'post' && (
-          <div className="flex items-center justify-center min-h-screen">
-            <p className="text-tg-hint">Coming soon: Create Listing</p>
-          </div>
+          <CreateListingPage
+            onBack={() => setActiveTab('home')}
+            onSuccess={() => setActiveTab('home')}
+          />
         )}
         {activeTab === 'messages' && (
-          <div className="flex items-center justify-center min-h-screen">
-            <p className="text-tg-hint">Coming soon: Messages</p>
+          <div className="flex flex-col items-center justify-center min-h-screen p-6">
+            <p className="text-5xl mb-4">💬</p>
+            <p className="text-tg-text font-medium">መልእክቶች</p>
+            <p className="text-tg-hint text-sm mt-1">Coming soon: Chat with buyers & sellers</p>
           </div>
         )}
       </main>
 
       {/* Bottom Navigation */}
-      {isAuthenticated && (
+      {isAuthenticated && page.type === 'main' && (
         <nav className="fixed bottom-0 left-0 right-0 bg-tg-secondary-bg border-t border-tg-hint/10 px-2 pt-1 pb-safe z-50">
           <div className="flex justify-around items-center pb-2">
             <NavItem
