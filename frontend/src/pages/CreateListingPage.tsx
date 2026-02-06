@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Camera, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Camera, X, Upload } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi, listingsApi, type Category, type CreateListing } from '@/lib/api';
@@ -44,9 +44,39 @@ export default function CreateListingPage({ onBack, onSuccess }: CreateListingPa
     categoriesApi.list().then(setCategories);
   }, []);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const remainingSlots = 8 - images.length;
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    
+    filesToProcess.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setImages((prev) => [...prev, dataUrl]);
+        haptic.impact('light');
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleImageUpload = () => {
-    // For now, use placeholder images
-    // TODO: Implement actual image upload with MinIO
+    fileInputRef.current?.click();
+  };
+
+  const handleAddPlaceholder = () => {
+    // Add a placeholder image for demo purposes
     const placeholders = [
       'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
@@ -122,6 +152,17 @@ export default function CreateListingPage({ onBack, onSuccess }: CreateListingPa
           <label className="block text-sm font-medium text-tg-text mb-2">
             ፎቶዎች / Photos
           </label>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
           <div className="flex gap-2 overflow-x-auto pb-2">
             {images.map((img, index) => (
               <div key={index} className="relative flex-shrink-0 w-24 h-24">
@@ -139,16 +180,25 @@ export default function CreateListingPage({ onBack, onSuccess }: CreateListingPa
               </div>
             ))}
             {images.length < 8 && (
-              <button
-                onClick={handleImageUpload}
-                className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint"
-              >
-                <Camera className="w-6 h-6 mb-1" />
-                <span className="text-xs">አክል</span>
-              </button>
+              <>
+                <button
+                  onClick={handleImageUpload}
+                  className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint border-2 border-dashed border-tg-hint/30"
+                >
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-xs">ፋይል</span>
+                </button>
+                <button
+                  onClick={handleAddPlaceholder}
+                  className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint"
+                >
+                  <Camera className="w-6 h-6 mb-1" />
+                  <span className="text-xs">Demo</span>
+                </button>
+              </>
             )}
           </div>
-          <p className="text-xs text-tg-hint mt-1">እስከ 8 ፎቶዎች / Up to 8 photos</p>
+          <p className="text-xs text-tg-hint mt-1">እስከ 8 ፎቶዎች / Up to 8 photos (tap ፋይል to upload)</p>
         </div>
 
         {/* Title */}

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Home, User, MessageCircle, PlusCircle } from 'lucide-react';
 import { TelegramProvider, useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { chatsApi } from '@/lib/api';
+import { ToastProvider, useToast } from '@/components/Toast';
 import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
@@ -22,9 +23,70 @@ interface PageState {
 
 function AppContent() {
   const { isLoading, isAuthenticated, error } = useAuth();
-  const { haptic, isInTelegram } = useTelegram();
+  const { haptic, isInTelegram, webApp } = useTelegram();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [page, setPage] = useState<PageState>({ type: 'main' });
+  const [unreadCount, setUnreadCount] = useState(0);
+  const lastUnreadRef = useRef(0);
+
+  // Handle deep links - check for /l/{id} pattern in start_param or URL
+  useEffect(() => {
+    const handleDeepLink = () => {
+      // Check Telegram start_param first
+      const startParam = webApp?.initDataUnsafe?.start_param;
+      if (startParam?.startsWith('l_')) {
+        const listingId = startParam.slice(2);
+        setPage({ type: 'listing', listingId });
+        return;
+      }
+      
+      // Check URL path
+      const path = window.location.pathname;
+      const match = path.match(/^\/l\/([a-zA-Z0-9-]+)$/);
+      if (match) {
+        setPage({ type: 'listing', listingId: match[1] });
+      }
+    };
+    
+    handleDeepLink();
+  }, [webApp]);
+
+  // Poll for unread messages
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkUnread = async () => {
+      try {
+        const { count } = await chatsApi.getUnreadCount();
+        setUnreadCount(count);
+        
+        // Show toast if new messages arrived
+        if (count > lastUnreadRef.current && lastUnreadRef.current > 0) {
+          haptic.notification('success');
+          showToast({
+            type: 'message',
+            title: 'አዲስ መልእክት / New message',
+            message: `${count} unread message${count > 1 ? 's' : ''}`,
+            onClick: () => {
+              setActiveTab('messages');
+              setPage({ type: 'main' });
+            },
+          });
+        }
+        lastUnreadRef.current = count;
+      } catch (e) {
+        // Ignore polling errors
+      }
+    };
+
+    // Initial check
+    checkUnread();
+
+    // Poll every 10 seconds
+    const interval = setInterval(checkUnread, 10000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, haptic, showToast]);
 
   // Block access outside Telegram (except in dev)
   const isDev = import.meta.env.DEV;
@@ -56,6 +118,12 @@ function AppContent() {
     haptic.selection();
     setActiveTab(tab);
     setPage({ type: 'main' });
+    
+    // Reset unread count when viewing messages
+    if (tab === 'messages') {
+      setUnreadCount(0);
+      lastUnreadRef.current = 0;
+    }
   };
 
   const handleOpenListing = (listingId: string) => {
@@ -175,6 +243,7 @@ function AppContent() {
               label="መልእክት"
               isActive={activeTab === 'messages'}
               onClick={() => handleTabChange('messages')}
+              badge={unreadCount > 0 ? unreadCount : undefined}
             />
             <NavItem
               icon={<User className="w-6 h-6" />}
@@ -194,17 +263,25 @@ interface NavItemProps {
   label: string;
   isActive: boolean;
   onClick: () => void;
+  badge?: number;
 }
 
-function NavItem({ icon, label, isActive, onClick }: NavItemProps) {
+function NavItem({ icon, label, isActive, onClick, badge }: NavItemProps) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors ${
+      className={`flex flex-col items-center py-2 px-4 rounded-lg transition-colors relative ${
         isActive ? 'text-tg-button' : 'text-tg-hint'
       }`}
     >
-      {icon}
+      <div className="relative">
+        {icon}
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
       <span className="text-xs mt-1">{label}</span>
     </button>
   );
@@ -213,7 +290,9 @@ function NavItem({ icon, label, isActive, onClick }: NavItemProps) {
 function App() {
   return (
     <TelegramProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </TelegramProvider>
   );
 }

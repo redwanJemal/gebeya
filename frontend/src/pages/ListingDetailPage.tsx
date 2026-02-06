@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Heart, Share2, MapPin, Clock, Eye, 
   MessageCircle, Phone, ChevronLeft, ChevronRight,
-  Verified, Flag
+  Verified, Flag, CheckCircle
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { listingsApi, type Listing } from '@/lib/api';
+
+const BOT_USERNAME = 'ContactNayaBot'; // Your bot username
 
 interface ListingDetailPageProps {
   listingId: string;
@@ -29,6 +31,7 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     loadListing();
@@ -61,10 +64,30 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
 
   const handleShare = () => {
     haptic.impact('light');
-    // Share via Telegram
+    // Share via Telegram with deep link
     if (webApp && listing) {
+      // Use deep link format: t.me/BotName?startapp=l_{listingId}
+      const deepLink = `https://t.me/${BOT_USERNAME}/app?startapp=l_${listing.id}`;
       const text = `${listing.title}\n💰 ${formatPrice(listing.price)}\n📍 ${listing.area || listing.city}`;
-      webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`);
+      webApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(text)}`);
+    }
+  };
+
+  const handleMarkAsSold = async () => {
+    if (!listing) return;
+    haptic.impact('medium');
+    setMarking(true);
+    
+    try {
+      const updated = await listingsApi.markAsSold(listing.id);
+      setListing({ ...listing, status: updated.status });
+      haptic.notification('success');
+    } catch (error) {
+      console.error('Failed to mark as sold:', error);
+      haptic.notification('error');
+      alert('Failed to mark as sold');
+    } finally {
+      setMarking(false);
     }
   };
 
@@ -200,6 +223,13 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
             ⭐ Featured
           </div>
         )}
+        
+        {/* Sold Badge */}
+        {listing.status === 'sold' && (
+          <div className="absolute top-16 right-4 bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold">
+            ተሽጧል / SOLD
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -304,20 +334,32 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
       {/* Owner Actions */}
       {isOwner && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-tg-bg border-t border-tg-secondary-bg">
-          <div className="flex gap-3">
-            <button
-              onClick={() => alert('Coming soon: Edit listing')}
-              className="flex-1 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium"
-            >
-              ✏️ አስተካክል
-            </button>
-            <button
-              onClick={() => alert('Coming soon: Mark as sold')}
-              className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium"
-            >
-              ✅ ተሸጧል
-            </button>
-          </div>
+          {listing.status === 'sold' ? (
+            <div className="py-3 bg-green-500/20 text-green-600 rounded-xl font-medium text-center flex items-center justify-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              ተሸጧል / Sold
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => alert('Coming soon: Edit listing')}
+                className="flex-1 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium"
+              >
+                ✏️ አስተካክል
+              </button>
+              <button
+                onClick={handleMarkAsSold}
+                disabled={marking}
+                className="flex-1 py-3 bg-green-500 text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {marking ? (
+                  <>🔄 Processing...</>
+                ) : (
+                  <>✅ ተሸጧል / Sold</>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

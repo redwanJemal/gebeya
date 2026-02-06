@@ -126,6 +126,12 @@ export const listingsApi = {
     request<{ favorited: boolean }>(`/listings/${id}/favorite`, {
       method: 'POST',
     }),
+  
+  markAsSold: (id: string) =>
+    request<Listing>(`/listings/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'sold' }),
+    }),
 };
 
 // Types
@@ -273,6 +279,8 @@ export const chatsApi = {
     const params = after ? `?after=${encodeURIComponent(after)}` : '';
     return request<ChatMessage[]>(`/chats/${chatId}/messages${params}`);
   },
+  
+  getUnreadCount: () => request<{ count: number }>('/chats/unread/count'),
 };
 
 export interface CreateListing {

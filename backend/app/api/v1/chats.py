@@ -20,6 +20,9 @@ router = APIRouter()
 
 # --- Schemas ---
 
+class UnreadCountResponse(BaseModel):
+    count: int
+
 class MessageCreate(BaseModel):
     text: str
 
@@ -286,6 +289,30 @@ async def send_message(
         created_at=message.created_at.isoformat(),
         is_mine=True,
     )
+
+
+@router.get("/unread/count", response_model=UnreadCountResponse)
+async def get_unread_count(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get total unread message count for current user."""
+    # Get all chats for this user
+    query = select(Chat).where(
+        or_(Chat.buyer_id == user.id, Chat.seller_id == user.id),
+        Chat.is_active == True,
+    ).options(selectinload(Chat.messages))
+    
+    result = await db.execute(query)
+    chats = result.scalars().all()
+    
+    # Count unread messages not sent by user
+    total_unread = sum(
+        len([m for m in chat.messages if not m.is_read and m.sender_id != user.id])
+        for chat in chats
+    )
+    
+    return UnreadCountResponse(count=total_unread)
 
 
 @router.get("/{chat_id}/messages", response_model=list[MessageResponse])

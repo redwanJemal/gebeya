@@ -19,6 +19,20 @@ export default {
         'tg-subtitle': 'var(--tg-theme-subtitle-text-color, #999999)',
         'tg-destructive': 'var(--tg-theme-destructive-text-color, #ff3b30)',
       },
+      keyframes: {
+        'slide-in': {
+          '0%': { transform: 'translateY(-100%)', opacity: 0 },
+          '100%': { transform: 'translateY(0)', opacity: 1 },
+        },
+        'slide-out': {
+          '0%': { transform: 'translateY(0)', opacity: 1 },
+          '100%': { transform: 'translateY(-100%)', opacity: 0 },
+        },
+      },
+      animation: {
+        'slide-in': 'slide-in 0.3s ease-out',
+        'slide-out': 'slide-out 0.2s ease-in',
+      },
     },
   },
   plugins: [],
