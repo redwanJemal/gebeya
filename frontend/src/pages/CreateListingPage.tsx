@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Camera, X, Upload } from 'lucide-react';
+import { ArrowLeft, X, Upload } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi, listingsApi, type Category, type CreateListing } from '@/lib/api';
@@ -73,21 +73,6 @@ export default function CreateListingPage({ onBack, onSuccess }: CreateListingPa
 
   const handleImageUpload = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleAddPlaceholder = () => {
-    // Add a placeholder image for demo purposes
-    const placeholders = [
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400',
-    ];
-    
-    if (images.length < 8) {
-      const randomImg = placeholders[Math.floor(Math.random() * placeholders.length)];
-      setImages([...images, randomImg]);
-      haptic.impact('light');
-    }
   };
 
   const removeImage = (index: number) => {
@@ -180,22 +165,13 @@ export default function CreateListingPage({ onBack, onSuccess }: CreateListingPa
               </div>
             ))}
             {images.length < 8 && (
-              <>
-                <button
-                  onClick={handleImageUpload}
-                  className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint border-2 border-dashed border-tg-hint/30"
-                >
-                  <Upload className="w-6 h-6 mb-1" />
-                  <span className="text-xs">ፋይል</span>
-                </button>
-                <button
-                  onClick={handleAddPlaceholder}
-                  className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint"
-                >
-                  <Camera className="w-6 h-6 mb-1" />
-                  <span className="text-xs">Demo</span>
-                </button>
-              </>
+              <button
+                onClick={handleImageUpload}
+                className="flex-shrink-0 w-24 h-24 bg-tg-secondary-bg rounded-xl flex flex-col items-center justify-center text-tg-hint border-2 border-dashed border-tg-hint/30"
+              >
+                <Upload className="w-6 h-6 mb-1" />
+                <span className="text-xs">ፋይል / Upload</span>
+              </button>
             )}
           </div>
           <p className="text-xs text-tg-hint mt-1">እስከ 8 ፎቶዎች / Up to 8 photos (tap ፋይል to upload)</p>

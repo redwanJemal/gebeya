@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { chatsApi } from '@/lib/api';
 import { ToastProvider, useToast } from '@/components/Toast';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import { PasscodeLock } from '@/components/PasscodeLock';
 import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
@@ -15,9 +16,10 @@ import ChatsPage from '@/pages/ChatsPage';
 import ChatRoomPage from '@/pages/ChatRoomPage';
 import MyListingsPage from '@/pages/MyListingsPage';
 import FavoritesPage from '@/pages/FavoritesPage';
+import MyPurchasesPage from '@/pages/MyPurchasesPage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
-type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit' | 'my-listings' | 'favorites';
+type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit' | 'my-listings' | 'favorites' | 'my-purchases';
 
 interface PageState {
   type: PageType;
@@ -26,13 +28,17 @@ interface PageState {
 }
 
 function AppContent() {
-  const { isLoading, isAuthenticated, error } = useAuth();
+  const { isLoading, isAuthenticated, error, user } = useAuth();
   const { haptic, isInTelegram, webApp } = useTelegram();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [page, setPage] = useState<PageState>({ type: 'main' });
   const [unreadCount, setUnreadCount] = useState(0);
   const lastUnreadRef = useRef(0);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Check if passcode lock is needed
+  const needsPasscodeLock = isAuthenticated && user?.has_passcode && !isUnlocked;
 
   // Handle deep links - check for /l/{id} pattern in start_param or URL
   useEffect(() => {
@@ -179,6 +185,10 @@ function AppContent() {
     setPage({ type: 'favorites' });
   };
 
+  const handleOpenMyPurchases = () => {
+    setPage({ type: 'my-purchases' });
+  };
+
   const handleBack = () => {
     setPage({ type: 'main' });
   };
@@ -201,6 +211,11 @@ function AppContent() {
         </button>
       </div>
     );
+  }
+
+  // Show passcode lock if user has passcode configured
+  if (needsPasscodeLock) {
+    return <PasscodeLock onUnlock={() => setIsUnlocked(true)} />;
   }
 
   // Render special pages
@@ -230,6 +245,15 @@ function AppContent() {
   if (page.type === 'favorites') {
     return (
       <FavoritesPage
+        onBack={handleBack}
+        onOpenListing={handleOpenListing}
+      />
+    );
+  }
+
+  if (page.type === 'my-purchases') {
+    return (
+      <MyPurchasesPage
         onBack={handleBack}
         onOpenListing={handleOpenListing}
       />
@@ -281,6 +305,7 @@ function AppContent() {
           <ProfilePage 
             onOpenMyListings={handleOpenMyListings}
             onOpenFavorites={handleOpenFavorites}
+            onOpenMyPurchases={handleOpenMyPurchases}
           />
         )}
         {activeTab === 'post' && (

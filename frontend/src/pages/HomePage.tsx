@@ -1,9 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Heart, MapPin, Verified, RefreshCw } from 'lucide-react';
+import { Search, Plus, Heart, MapPin, Verified, RefreshCw, SlidersHorizontal, X } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi, listingsApi, demoApi, type Category, type Listing } from '@/lib/api';
 import { ListingGridSkeleton, CategorySkeleton } from '@/components/Skeleton';
+
+const CONDITIONS = [
+  { value: '', label: 'ሁሉም' },
+  { value: 'new', label: 'አዲስ' },
+  { value: 'like_new', label: 'እንደ አዲስ' },
+  { value: 'used', label: 'ጥቅም ላይ የዋለ' },
+];
+
+const PRICE_RANGES = [
+  { value: '', label: 'ሁሉም ዋጋ', min: undefined, max: undefined },
+  { value: 'under5k', label: '< 5,000', min: undefined, max: 5000 },
+  { value: '5k-20k', label: '5,000 - 20,000', min: 5000, max: 20000 },
+  { value: '20k-50k', label: '20,000 - 50,000', min: 20000, max: 50000 },
+  { value: '50k-100k', label: '50,000 - 100,000', min: 50000, max: 100000 },
+  { value: 'over100k', label: '> 100,000', min: 100000, max: undefined },
+];
 
 interface HomePageProps {
   onOpenListing?: (listingId: string) => void;
@@ -18,6 +34,12 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCondition, setSelectedCondition] = useState('');
+  const [selectedPriceRange, setSelectedPriceRange] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Fetch data on mount + auto-seed if admin
   useEffect(() => {
@@ -40,10 +62,11 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
     init();
   }, [user?.is_admin]);
 
-  // Refetch when category changes
+  // Refetch when filters change
   useEffect(() => {
-    loadListings();
-  }, [selectedCategory, searchQuery]);
+    setPage(1);
+    loadListings(true);
+  }, [selectedCategory, searchQuery, selectedCondition, selectedPriceRange]);
 
   const loadData = async () => {
     setLoading(true);
@@ -61,24 +84,77 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
     }
   };
 
-  const loadListings = async () => {
+  const loadListings = async (reset = false) => {
+    const currentPage = reset ? 1 : page;
+    const priceRange = PRICE_RANGES.find((r) => r.value === selectedPriceRange);
+    
     try {
       const result = await listingsApi.list({
         category: selectedCategory || undefined,
         search: searchQuery || undefined,
-        per_page: 20,
+        condition: selectedCondition || undefined,
+        min_price: priceRange?.min,
+        max_price: priceRange?.max,
+        page: currentPage,
+        per_page: 12,
       });
-      setListings(result.items);
+      
+      if (reset) {
+        setListings(result.items);
+      } else {
+        setListings((prev) => [...prev, ...result.items]);
+      }
+      setHasMore(result.has_more);
     } catch (error) {
       console.error('Failed to load listings:', error);
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    
+    const priceRange = PRICE_RANGES.find((r) => r.value === selectedPriceRange);
+    
+    try {
+      const result = await listingsApi.list({
+        category: selectedCategory || undefined,
+        search: searchQuery || undefined,
+        condition: selectedCondition || undefined,
+        min_price: priceRange?.min,
+        max_price: priceRange?.max,
+        page: nextPage,
+        per_page: 12,
+      });
+      
+      setListings((prev) => [...prev, ...result.items]);
+      setHasMore(result.has_more);
+    } catch (error) {
+      console.error('Failed to load more:', error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     haptic.impact('light');
+    setPage(1);
     await loadData();
     setRefreshing(false);
+  };
+
+  const activeFiltersCount = 
+    (selectedCondition ? 1 : 0) + 
+    (selectedPriceRange ? 1 : 0);
+
+  const clearFilters = () => {
+    haptic.selection();
+    setSelectedCondition('');
+    setSelectedPriceRange('');
+    setShowFilters(false);
   };
 
   const handleCategorySelect = (categoryId: string | null) => {
@@ -130,7 +206,7 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
     <div className="min-h-screen pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-tg-bg px-4 py-3 border-b border-tg-secondary-bg">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-tg-hint" />
             <input
@@ -141,6 +217,22 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
               className="w-full pl-10 pr-4 py-2.5 bg-tg-secondary-bg rounded-xl text-tg-text placeholder:text-tg-hint focus:outline-none focus:ring-2 focus:ring-tg-button"
             />
           </div>
+          <button
+            onClick={() => {
+              haptic.selection();
+              setShowFilters(true);
+            }}
+            className={`p-2.5 rounded-xl relative ${
+              activeFiltersCount > 0 ? 'bg-tg-button text-tg-button-text' : 'bg-tg-secondary-bg'
+            }`}
+          >
+            <SlidersHorizontal className={`w-5 h-5 ${activeFiltersCount > 0 ? '' : 'text-tg-hint'}`} />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
           <button
             onClick={handleRefresh}
             className="p-2.5 bg-tg-secondary-bg rounded-xl"
@@ -157,6 +249,91 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
           {user?.area && <span>• {user.area}</span>}
         </div>
       </div>
+
+      {/* Filter Modal */}
+      {showFilters && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="bg-tg-bg w-full max-w-lg rounded-t-2xl p-4 animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-tg-text">ማጣሪያዎች / Filters</h2>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="p-2 text-tg-hint"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Condition Filter */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-tg-text mb-2 block">
+                ሁኔታ / Condition
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CONDITIONS.map((cond) => (
+                  <button
+                    key={cond.value}
+                    onClick={() => {
+                      haptic.selection();
+                      setSelectedCondition(cond.value);
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      selectedCondition === cond.value
+                        ? 'bg-tg-button text-tg-button-text'
+                        : 'bg-tg-secondary-bg text-tg-text'
+                    }`}
+                  >
+                    {cond.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range Filter */}
+            <div className="mb-6">
+              <label className="text-sm font-medium text-tg-text mb-2 block">
+                ዋጋ / Price Range
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {PRICE_RANGES.map((range) => (
+                  <button
+                    key={range.value}
+                    onClick={() => {
+                      haptic.selection();
+                      setSelectedPriceRange(range.value);
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      selectedPriceRange === range.value
+                        ? 'bg-tg-button text-tg-button-text'
+                        : 'bg-tg-secondary-bg text-tg-text'
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="flex-1 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium"
+                >
+                  አጽዳ / Clear
+                </button>
+              )}
+              <button
+                onClick={() => setShowFilters(false)}
+                className="flex-1 py-3 bg-tg-button text-tg-button-text rounded-xl font-medium"
+              >
+                ተግብር / Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Categories */}
       <div className="px-4 py-3">
@@ -193,17 +370,32 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
         {listings.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {listings.map((listing) => (
-              <ListingCard 
-                key={listing.id} 
-                listing={listing} 
-                formatPrice={formatPrice} 
-                getTimeAgo={getTimeAgo}
-                onOpen={() => onOpenListing?.(listing.id)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {listings.map((listing) => (
+                <ListingCard 
+                  key={listing.id} 
+                  listing={listing} 
+                  formatPrice={formatPrice} 
+                  getTimeAgo={getTimeAgo}
+                  onOpen={() => onOpenListing?.(listing.id)}
+                />
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium disabled:opacity-50"
+                >
+                  {loadingMore ? '🔄 እየጫነ...' : '⬇️ ተጨማሪ ጫን / Load More'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

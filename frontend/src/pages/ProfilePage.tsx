@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
-  ArrowLeft, Phone, MapPin, Star, Package, 
-  ShoppingBag, Heart, Settings, LogOut, 
+  ArrowLeft, Phone, Star, Package, 
+  ShoppingBag, Heart, LogOut, 
   CheckCircle, AlertCircle, ChevronRight, Smartphone, Lock
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
@@ -14,9 +14,10 @@ interface ProfilePageProps {
   onBack?: () => void;
   onOpenMyListings?: () => void;
   onOpenFavorites?: () => void;
+  onOpenMyPurchases?: () => void;
 }
 
-export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites }: ProfilePageProps) {
+export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites, onOpenMyPurchases }: ProfilePageProps) {
   const { webApp, haptic } = useTelegram();
   const { user, refreshUser } = useAuth();
   const [verifying, setVerifying] = useState(false);
@@ -227,27 +228,16 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites 
         <MenuItem
           icon={<ShoppingBag className="w-5 h-5" />}
           label="ግዢዎቼ / My Purchases"
-          onClick={() => alert('ብዙም ሳይቆይ / Coming soon')}
+          onClick={onOpenMyPurchases}
         />
         
         <div className="h-2" />
         
         <MenuItem
-          icon={<MapPin className="w-5 h-5" />}
-          label="አካባቢ / Location"
-          value={user.area || user.city}
-          onClick={() => alert('Coming soon: Change Location')}
-        />
-        <MenuItem
           icon={<Lock className="w-5 h-5" />}
           label={user?.has_passcode ? "ኮድ ቀይር / Change Passcode" : "ኮድ አክል / Set Passcode"}
           value={user?.has_passcode ? "✓" : undefined}
           onClick={() => setShowPasscodeSettings(true)}
-        />
-        <MenuItem
-          icon={<Settings className="w-5 h-5" />}
-          label="ቅንብሮች / Settings"
-          onClick={() => alert('ብዙም ሳይቆይ / Coming soon')}
         />
         <MenuItem
           icon={<Smartphone className="w-5 h-5" />}

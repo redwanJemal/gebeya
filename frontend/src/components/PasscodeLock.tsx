@@ -5,16 +5,18 @@ import { usersApi } from '@/lib/api';
 
 interface PasscodeLockProps {
   onUnlock: () => void;
+  onReset?: () => void;
 }
 
-export function PasscodeLock({ onUnlock }: PasscodeLockProps) {
-  const { haptic } = useTelegram();
+export function PasscodeLock({ onUnlock, onReset }: PasscodeLockProps) {
+  const { haptic, webApp } = useTelegram();
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
   const handleDigit = (digit: string) => {
-    if (passcode.length >= 6) return;
+    if (passcode.length >= 4) return;
     haptic.impact('light');
     setError(false);
     setPasscode((prev) => prev + digit);
@@ -26,29 +28,47 @@ export function PasscodeLock({ onUnlock }: PasscodeLockProps) {
   };
 
   const handleSubmit = async () => {
-    if (passcode.length < 4) return;
+    if (passcode.length !== 4) return;
     
     setLoading(true);
     try {
       await usersApi.verifyPasscode(passcode);
       haptic.notification('success');
+      setAttempts(0);
       onUnlock();
     } catch (e) {
       haptic.notification('error');
       setError(true);
       setPasscode('');
+      setAttempts((prev) => prev + 1);
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-submit when 4-6 digits entered
+  // Auto-submit when 4 digits entered
   useEffect(() => {
-    if (passcode.length >= 4) {
+    if (passcode.length === 4) {
       const timer = setTimeout(handleSubmit, 300);
       return () => clearTimeout(timer);
     }
   }, [passcode]);
+
+  const handleResetRequest = () => {
+    haptic.impact('medium');
+    if (onReset) {
+      onReset();
+    } else {
+      // Close app and ask user to contact bot to reset
+      webApp?.showPopup({
+        title: 'ኮድ ዳግም አስጀምር',
+        message: 'ኮድዎን ዳግም ለማስጀመር ቦትን ያነጋግሩ\n\nContact the bot to reset your passcode.',
+        buttons: [
+          { type: 'close', text: 'ዝጋ / Close' },
+        ],
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-tg-bg flex flex-col items-center justify-center p-6">
@@ -57,11 +77,11 @@ export function PasscodeLock({ onUnlock }: PasscodeLockProps) {
       </div>
 
       <h1 className="text-xl font-bold text-tg-text mb-2">ገበያ ተቆልፏል</h1>
-      <p className="text-tg-hint text-sm mb-8">Enter your passcode</p>
+      <p className="text-tg-hint text-sm mb-8">Enter your 4-digit passcode</p>
 
-      {/* Dots */}
-      <div className="flex gap-3 mb-8">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
+      {/* Dots - only 4 */}
+      <div className="flex gap-4 mb-8">
+        {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
             className={`w-4 h-4 rounded-full transition-all ${
@@ -101,6 +121,16 @@ export function PasscodeLock({ onUnlock }: PasscodeLockProps) {
           </button>
         ))}
       </div>
+
+      {/* Reset passcode link - show after 2 failed attempts */}
+      {attempts >= 2 && (
+        <button
+          onClick={handleResetRequest}
+          className="mt-6 text-tg-link text-sm"
+        >
+          ኮድ ረስቻለሁ / Forgot passcode?
+        </button>
+      )}
     </div>
   );
 }
@@ -135,7 +165,7 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
     step === 'new' ? setNewPasscode : setConfirmPasscode;
 
   const handleDigit = (digit: string) => {
-    if (currentInput.length >= 6) return;
+    if (currentInput.length >= 4) return;
     haptic.impact('light');
     setError('');
     setCurrentInput((prev) => prev + digit);
@@ -147,7 +177,7 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
   };
 
   const handleNext = async () => {
-    if (currentInput.length < 4) return;
+    if (currentInput.length !== 4) return;
 
     if (step === 'current') {
       // Verify current passcode
@@ -186,7 +216,7 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
   };
 
   const handleRemove = async () => {
-    if (currentInput.length < 4) return;
+    if (currentInput.length !== 4) return;
     
     setLoading(true);
     try {
@@ -201,9 +231,9 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
     }
   };
 
-  // Auto-advance
+  // Auto-advance when 4 digits entered
   useEffect(() => {
-    if (currentInput.length >= 4 && !error) {
+    if (currentInput.length === 4 && !error) {
       const timer = setTimeout(handleNext, 300);
       return () => clearTimeout(timer);
     }
@@ -224,14 +254,14 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
 
       <h1 className="text-xl font-bold text-tg-text mb-2">🔒 {title}</h1>
       <p className="text-tg-hint text-sm mb-8">
-        {step === 'current' && 'Enter current passcode'}
-        {step === 'new' && 'Enter new 4-6 digit code'}
-        {step === 'confirm' && 'Enter code again'}
+        {step === 'current' && 'Enter current 4-digit passcode'}
+        {step === 'new' && 'Enter new 4-digit code'}
+        {step === 'confirm' && 'Enter code again to confirm'}
       </p>
 
-      {/* Dots */}
-      <div className="flex gap-3 mb-6">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
+      {/* Dots - only 4 */}
+      <div className="flex gap-4 mb-6">
+        {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
             className={`w-4 h-4 rounded-full transition-all ${
@@ -270,7 +300,7 @@ export function PasscodeSettings({ hasPasscode, onClose, onSuccess }: PasscodeSe
       {hasPasscode && step === 'current' && (
         <button
           onClick={handleRemove}
-          disabled={loading || currentInput.length < 4}
+          disabled={loading || currentInput.length !== 4}
           className="mt-6 text-red-500 text-sm disabled:opacity-50"
         >
           ኮድ አስወግድ / Remove Passcode

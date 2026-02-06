@@ -83,5 +83,18 @@ async def get_current_user(
     return user
 
 
-# Type alias for dependency injection
+async def get_current_user_optional(
+    authorization: Annotated[str | None, Header()] = None,
+    x_init_data: Annotated[str | None, Header(alias="X-Init-Data")] = None,
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Get current user if authenticated, or None if not."""
+    try:
+        return await get_current_user(authorization, x_init_data, db)
+    except HTTPException:
+        return None
+
+
+# Type aliases for dependency injection
 CurrentUser = Annotated[User, Depends(get_current_user)]
+OptionalUser = Annotated[User | None, Depends(get_current_user_optional)]

@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUser, OptionalUser
 from app.core.database import get_db
 from app.models.listing import Listing, ListingCondition, ListingStatus
 from app.models.user import User
@@ -102,6 +102,7 @@ async def list_listings(
     condition: ListingCondition | None = None,
     city: str = "Addis Ababa",
     seed: bool = False,  # Auto-seed param
+    user: OptionalUser = None,
     db: AsyncSession = Depends(get_db),
 ):
     """List active listings with filters."""
@@ -138,6 +139,14 @@ async def list_listings(
     result = await db.execute(query)
     listings = result.scalars().all()
     
+    # Get user's favorited listing IDs
+    favorited_ids: set[str] = set()
+    if user:
+        fav_result = await db.execute(
+            select(Favorite.listing_id).where(Favorite.user_id == user.id)
+        )
+        favorited_ids = {str(fid) for fid in fav_result.scalars().all()}
+    
     items = [
         ListingResponse(
             id=str(l.id),
@@ -165,6 +174,7 @@ async def list_listings(
                 total_sales=l.user.total_sales,
                 member_since=l.user.created_at.strftime("%b %Y"),
             ) if l.user else None,
+            is_favorited=str(l.id) in favorited_ids,
         )
         for l in listings
     ]
