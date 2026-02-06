@@ -1,9 +1,10 @@
 """Chat endpoints."""
 
+import asyncio
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy import or_, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,7 @@ from app.core.database import get_db
 from app.models.chat import Chat, Message
 from app.models.listing import Listing
 from app.models.user import User
+from app.services.notifications import notify_new_message
 
 router = APIRouter()
 
@@ -252,10 +254,21 @@ async def send_message(
     chat_id: UUID,
     body: MessageCreate,
     user: CurrentUser,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """Send a message in a chat."""
-    chat = await db.get(Chat, chat_id)
+    # Load chat with relationships
+    result = await db.execute(
+        select(Chat)
+        .where(Chat.id == chat_id)
+        .options(
+            selectinload(Chat.buyer),
+            selectinload(Chat.seller),
+            selectinload(Chat.listing),
+        )
+    )
+    chat = result.scalar_one_or_none()
     
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -277,6 +290,18 @@ async def send_message(
     
     await db.flush()
     await db.refresh(message)
+    
+    # Send notification to the other user
+    recipient = chat.seller if chat.buyer_id == user.id else chat.buyer
+    if recipient and recipient.telegram_id:
+        background_tasks.add_task(
+            notify_new_message,
+            recipient_telegram_id=recipient.telegram_id,
+            sender_name=user.display_name,
+            listing_title=chat.listing.title if chat.listing else "Listing",
+            message_preview=body.text.strip(),
+            listing_id=str(chat.listing_id),
+        )
     
     return MessageResponse(
         id=str(message.id),
