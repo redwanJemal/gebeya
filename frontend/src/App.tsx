@@ -33,25 +33,42 @@ function AppContent() {
 
   // Handle deep links - check for /l/{id} pattern in start_param or URL
   useEffect(() => {
+    // Wait for auth to complete before handling deep links
+    if (isLoading) return;
+    
     const handleDeepLink = () => {
-      // Check Telegram start_param first
+      // Check Telegram start_param first (format: l_uuid)
       const startParam = webApp?.initDataUnsafe?.start_param;
+      console.log('Deep link check - start_param:', startParam);
+      
       if (startParam?.startsWith('l_')) {
         const listingId = startParam.slice(2);
+        console.log('Opening listing from deep link:', listingId);
         setPage({ type: 'listing', listingId });
         return;
       }
       
-      // Check URL path
-      const path = window.location.pathname;
-      const match = path.match(/^\/l\/([a-zA-Z0-9-]+)$/);
-      if (match) {
-        setPage({ type: 'listing', listingId: match[1] });
+      // Check URL search params (format: ?startapp=l_uuid)
+      const urlParams = new URLSearchParams(window.location.search);
+      const startapp = urlParams.get('startapp');
+      if (startapp?.startsWith('l_')) {
+        const listingId = startapp.slice(2);
+        console.log('Opening listing from URL param:', listingId);
+        setPage({ type: 'listing', listingId });
+        return;
+      }
+      
+      // Check URL hash (format: #/l/uuid)
+      const hash = window.location.hash;
+      const hashMatch = hash.match(/^#\/l\/([a-zA-Z0-9-]+)$/);
+      if (hashMatch) {
+        console.log('Opening listing from hash:', hashMatch[1]);
+        setPage({ type: 'listing', listingId: hashMatch[1] });
       }
     };
     
     handleDeepLink();
-  }, [webApp]);
+  }, [webApp, isLoading]);
 
   // Poll for unread messages
   useEffect(() => {
