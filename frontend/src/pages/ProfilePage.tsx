@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   ArrowLeft, Phone, MapPin, Star, Package, 
   ShoppingBag, Heart, Settings, LogOut, 
-  CheckCircle, AlertCircle, ChevronRight
+  CheckCircle, AlertCircle, ChevronRight, Smartphone
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
@@ -239,7 +239,17 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites 
         <MenuItem
           icon={<Settings className="w-5 h-5" />}
           label="ቅንብሮች / Settings"
-          onClick={() => alert('Coming soon: Settings')}
+          onClick={() => alert('ብዙም ሳይቆይ / Coming soon')}
+        />
+        <MenuItem
+          icon={<Smartphone className="w-5 h-5" />}
+          label="ወደ ስክሪን ጨምር / Add to Home"
+          onClick={() => {
+            haptic.impact('light');
+            if (webApp) {
+              webApp.openLink('https://mini.redwanjemal.dev?install=true', { try_instant_view: false });
+            }
+          }}
         />
         
         <div className="h-2" />

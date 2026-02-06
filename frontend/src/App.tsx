@@ -4,6 +4,7 @@ import { TelegramProvider, useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { chatsApi } from '@/lib/api';
 import { ToastProvider, useToast } from '@/components/Toast';
+import { InstallPrompt } from '@/components/InstallPrompt';
 import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
@@ -363,6 +364,7 @@ function App() {
     <TelegramProvider>
       <ToastProvider>
         <AppContent />
+        <InstallPrompt />
       </ToastProvider>
     </TelegramProvider>
   );
