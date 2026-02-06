@@ -291,9 +291,9 @@ async def send_message(
 @router.get("/{chat_id}/messages", response_model=list[MessageResponse])
 async def get_messages(
     chat_id: UUID,
-    after: str | None = None,
-    user: CurrentUser = Depends(),
+    user: CurrentUser,
     db: AsyncSession = Depends(get_db),
+    after: str | None = None,
 ):
     """Get messages for a chat (for polling new messages)."""
     chat = await db.get(Chat, chat_id)
