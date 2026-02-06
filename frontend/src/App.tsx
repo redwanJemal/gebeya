@@ -12,9 +12,11 @@ import EditListingPage from '@/pages/EditListingPage';
 import ListingDetailPage from '@/pages/ListingDetailPage';
 import ChatsPage from '@/pages/ChatsPage';
 import ChatRoomPage from '@/pages/ChatRoomPage';
+import MyListingsPage from '@/pages/MyListingsPage';
+import FavoritesPage from '@/pages/FavoritesPage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
-type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit';
+type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit' | 'my-listings' | 'favorites';
 
 interface PageState {
   type: PageType;
@@ -168,6 +170,14 @@ function AppContent() {
     setPage({ type: 'edit', listingId });
   };
 
+  const handleOpenMyListings = () => {
+    setPage({ type: 'my-listings' });
+  };
+
+  const handleOpenFavorites = () => {
+    setPage({ type: 'favorites' });
+  };
+
   const handleBack = () => {
     setPage({ type: 'main' });
   };
@@ -201,6 +211,26 @@ function AppContent() {
           handleBack();
           setActiveTab('home');
         }}
+      />
+    );
+  }
+
+  if (page.type === 'my-listings') {
+    return (
+      <MyListingsPage
+        onBack={handleBack}
+        onOpenListing={handleOpenListing}
+        onEditListing={handleEditListing}
+        onCreateListing={() => setActiveTab('post')}
+      />
+    );
+  }
+
+  if (page.type === 'favorites') {
+    return (
+      <FavoritesPage
+        onBack={handleBack}
+        onOpenListing={handleOpenListing}
       />
     );
   }
@@ -246,7 +276,12 @@ function AppContent() {
       {/* Main Content */}
       <main className="pb-20">
         {activeTab === 'home' && <HomePage onOpenListing={handleOpenListing} />}
-        {activeTab === 'profile' && <ProfilePage />}
+        {activeTab === 'profile' && (
+          <ProfilePage 
+            onOpenMyListings={handleOpenMyListings}
+            onOpenFavorites={handleOpenFavorites}
+          />
+        )}
         {activeTab === 'post' && (
           <CreateListingPage
             onBack={() => setActiveTab('home')}

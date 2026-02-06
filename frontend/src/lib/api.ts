@@ -132,6 +132,8 @@ export const listingsApi = {
       method: 'PATCH',
       body: JSON.stringify({ status: 'sold' }),
     }),
+  
+  favorites: () => request<Listing[]>('/listings/favorites'),
 };
 
 // Types

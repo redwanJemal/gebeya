@@ -245,6 +245,57 @@ async def create_listing(
     )
 
 
+@router.get("/favorites", response_model=list[ListingResponse])
+async def get_favorites(
+    user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get user's favorited listings."""
+    query = (
+        select(Listing)
+        .join(Favorite, Favorite.listing_id == Listing.id)
+        .where(Favorite.user_id == user.id)
+        .where(Listing.status != ListingStatus.deleted)
+        .options(selectinload(Listing.user))
+        .order_by(Favorite.created_at.desc())
+    )
+    
+    result = await db.execute(query)
+    listings = result.scalars().all()
+    
+    return [
+        ListingResponse(
+            id=str(l.id),
+            title=l.title,
+            description=l.description,
+            price=l.price,
+            currency=l.currency,
+            is_negotiable=l.is_negotiable,
+            condition=l.condition.value,
+            images=l.images or [],
+            city=l.city,
+            area=l.area,
+            status=l.status.value,
+            views_count=l.views_count,
+            favorites_count=l.favorites_count,
+            is_featured=l.is_featured,
+            created_at=l.created_at.isoformat(),
+            category_id=str(l.category_id),
+            seller=SellerInfo(
+                id=str(l.user.id),
+                name=l.user.display_name,
+                username=l.user.username,
+                is_verified=l.user.is_verified,
+                rating=l.user.rating,
+                total_sales=l.user.total_sales,
+                member_since=l.user.created_at.strftime("%b %Y"),
+            ) if l.user else None,
+            is_favorited=True,
+        )
+        for l in listings
+    ]
+
+
 @router.get("/my", response_model=list[ListingResponse])
 async def my_listings(
     user: CurrentUser,

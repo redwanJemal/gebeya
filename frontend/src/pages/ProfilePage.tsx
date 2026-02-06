@@ -11,9 +11,11 @@ import { ProfileSkeleton } from '@/components/Skeleton';
 
 interface ProfilePageProps {
   onBack?: () => void;
+  onOpenMyListings?: () => void;
+  onOpenFavorites?: () => void;
 }
 
-export default function ProfilePage({ onBack }: ProfilePageProps) {
+export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites }: ProfilePageProps) {
   const { webApp, haptic } = useTelegram();
   const { user, refreshUser } = useAuth();
   const [verifying, setVerifying] = useState(false);
@@ -213,17 +215,17 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
           icon={<Package className="w-5 h-5" />}
           label="ዕቃዎቼ / My Listings"
           badge={user.total_listings > 0 ? String(user.total_listings) : undefined}
-          onClick={() => alert('Coming soon: My Listings')}
+          onClick={onOpenMyListings}
         />
         <MenuItem
           icon={<Heart className="w-5 h-5" />}
           label="የተወደዱ / Favorites"
-          onClick={() => alert('Coming soon: Favorites')}
+          onClick={onOpenFavorites}
         />
         <MenuItem
           icon={<ShoppingBag className="w-5 h-5" />}
           label="ግዢዎቼ / My Purchases"
-          onClick={() => alert('Coming soon: Purchases')}
+          onClick={() => alert('ብዙም ሳይቆይ / Coming soon')}
         />
         
         <div className="h-2" />
