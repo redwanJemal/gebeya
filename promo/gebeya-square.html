@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1080px;
+      height: 1080px;
+      font-family: 'Noto Sans Ethiopic', -apple-system, sans-serif;
+      background: linear-gradient(145deg, #064E3B 0%, #022C22 60%, #011614 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      padding: 60px;
+      text-align: center;
+    }
+    .glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      filter: blur(80px);
+    }
+    .badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10B981;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 40px;
+      z-index: 1;
+    }
+    .cart-icon {
+      font-size: 100px;
+      margin-bottom: 30px;
+      z-index: 1;
+    }
+    h1 {
+      font-size: 120px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #10B981, #34D399, #6EE7B7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      z-index: 1;
+      letter-spacing: 2px;
+    }
+    h2 {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 30px;
+      z-index: 1;
+    }
+    p {
+      font-size: 26px;
+      color: #9CA3AF;
+      line-height: 1.6;
+      max-width: 700px;
+      margin-bottom: 50px;
+      z-index: 1;
+    }
+    .features {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 1;
+    }
+    .feature {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 18px;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .telegram-logo {
+      position: absolute;
+      bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #5eb5f7;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="badge">🇪🇹 TELEGRAM MINI APP</div>
+  <div class="cart-icon">🛒</div>
+  <h1>ገበያ</h1>
+  <h2>Ethiopian Marketplace</h2>
+  <p>Buy & sell locally through Telegram.<br>Secure. Fast. Free.</p>
+  <div class="features">
+    <span class="feature">💬 In-App Chat</span>
+    <span class="feature">📍 Local Deals</span>
+    <span class="feature">🔒 Secure</span>
+  </div>
+  <div class="telegram-logo">Open in Telegram ↗</div>
+</body>
+</html>

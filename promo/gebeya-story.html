@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      font-family: 'Noto Sans Ethiopic', -apple-system, sans-serif;
+      background: linear-gradient(180deg, #064E3B 0%, #022C22 40%, #011614 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+      padding: 80px 60px;
+      text-align: center;
+    }
+    .glow {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      filter: blur(100px);
+    }
+    .badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10B981;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 60px;
+      z-index: 1;
+    }
+    .mockup {
+      width: 380px;
+      height: 700px;
+      background: #18222d;
+      border-radius: 50px;
+      border: 4px solid #333;
+      padding: 15px;
+      box-shadow: 0 40px 120px rgba(16, 185, 129, 0.4);
+      margin-bottom: 60px;
+      z-index: 1;
+    }
+    .mockup-screen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #232e3c 0%, #18222d 100%);
+      border-radius: 38px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 25px;
+    }
+    .mockup-header {
+      color: #7d8b99;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .mockup-search {
+      width: 100%;
+      height: 45px;
+      background: #2d3a4a;
+      border-radius: 22px;
+      margin-bottom: 20px;
+    }
+    .mockup-cats {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .mockup-cat {
+      background: #10B981;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: white;
+    }
+    .mockup-cat.inactive {
+      background: #2d3a4a;
+      color: #7d8b99;
+    }
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+    .mockup-card {
+      background: #2d3a4a;
+      border-radius: 16px;
+      height: 140px;
+    }
+    h1 {
+      font-size: 100px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #10B981, #34D399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      z-index: 1;
+    }
+    h2 {
+      font-size: 42px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 30px;
+      z-index: 1;
+    }
+    p {
+      font-size: 24px;
+      color: #9CA3AF;
+      line-height: 1.6;
+      margin-bottom: 50px;
+      z-index: 1;
+    }
+    .cta {
+      background: #10B981;
+      color: white;
+      padding: 20px 50px;
+      border-radius: 40px;
+      font-size: 22px;
+      font-weight: 700;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="badge">🇪🇹 NEW TELEGRAM APP</div>
+  <div class="mockup">
+    <div class="mockup-screen">
+      <div class="mockup-header">🛒 Addis Ababa</div>
+      <div class="mockup-search"></div>
+      <div class="mockup-cats">
+        <span class="mockup-cat">All</span>
+        <span class="mockup-cat inactive">📱</span>
+        <span class="mockup-cat inactive">🚗</span>
+        <span class="mockup-cat inactive">👕</span>
+      </div>
+      <div class="mockup-grid">
+        <div class="mockup-card"></div>
+        <div class="mockup-card"></div>
+        <div class="mockup-card"></div>
+        <div class="mockup-card"></div>
+      </div>
+    </div>
+  </div>
+  <h1>ገበያ</h1>
+  <h2>Ethiopian Marketplace</h2>
+  <p>Buy & sell locally through Telegram</p>
+  <div class="cta">Open Now →</div>
+</body>
+</html>

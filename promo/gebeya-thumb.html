@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1200px;
+      height: 628px;
+      font-family: 'Noto Sans Ethiopic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #064E3B 0%, #022C22 50%, #011614 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      gap: 60px;
+      padding: 40px 60px;
+    }
+    .mockup {
+      width: 280px;
+      height: 500px;
+      background: #18222d;
+      border-radius: 40px;
+      border: 3px solid #333;
+      padding: 12px;
+      box-shadow: 0 25px 80px rgba(16, 185, 129, 0.3);
+      position: relative;
+      transform: perspective(1000px) rotateY(-8deg);
+    }
+    .mockup-screen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #232e3c 0%, #18222d 100%);
+      border-radius: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .mockup-header {
+      color: #7d8b99;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+    .mockup-search {
+      width: 100%;
+      height: 36px;
+      background: #2d3a4a;
+      border-radius: 18px;
+      margin-bottom: 15px;
+    }
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+    .mockup-card {
+      background: #2d3a4a;
+      border-radius: 12px;
+      height: 100px;
+    }
+    .content {
+      color: white;
+      max-width: 550px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.2);
+      color: #10B981;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #10B981, #34D399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Noto Sans Ethiopic', sans-serif;
+    }
+    h2 {
+      font-size: 36px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 20px;
+      color: #9CA3AF;
+      line-height: 1.5;
+      margin-bottom: 30px;
+    }
+    .features {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .feature {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 10px 18px;
+      border-radius: 25px;
+      font-size: 14px;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .glow {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      top: 50%;
+      left: 30%;
+      transform: translate(-50%, -50%);
+      filter: blur(60px);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="container">
+    <div class="mockup">
+      <div class="mockup-screen">
+        <div class="mockup-header">🛒 Addis Ababa</div>
+        <div class="mockup-search"></div>
+        <div class="mockup-grid">
+          <div class="mockup-card"></div>
+          <div class="mockup-card"></div>
+          <div class="mockup-card"></div>
+          <div class="mockup-card"></div>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="badge">📱 TELEGRAM MINI APP</div>
+      <h1>ገበያ</h1>
+      <h2>Ethiopian Marketplace</h2>
+      <p>Buy and sell locally through Telegram.<br>Secure chat. Real-time deals. Zero fees.</p>
+      <div class="features">
+        <span class="feature">💬 In-App Chat</span>
+        <span class="feature">📍 Local Deals</span>
+        <span class="feature">🔒 Secure</span>
+        <span class="feature">⚡ Instant</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
