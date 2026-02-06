@@ -56,6 +56,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
     is_verified_seller: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
