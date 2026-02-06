@@ -4,6 +4,13 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # S3/MinIO
+    S3_ENDPOINT: str = "http://localhost:9000"
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
+    S3_BUCKET: str = "gebeya-uploads"
+    S3_REGION: str = "us-east-1"
+
     """Application settings loaded from environment."""
 
     # App

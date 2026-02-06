@@ -220,3 +220,11 @@ export interface CreateListing {
   area?: string;
   images?: string[];
 }
+
+// Demo API
+export const demoApi = {
+  seedListings: () =>
+    request<{ message: string; listings: string[] }>('/demo/seed-listings', {
+      method: 'POST',
+    }),
+};

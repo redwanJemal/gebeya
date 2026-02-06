@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Search, Plus, Heart, MapPin, Verified, RefreshCw } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
-import { categoriesApi, listingsApi, type Category, type Listing } from '@/lib/api';
+import { categoriesApi, listingsApi, demoApi, type Category, type Listing } from '@/lib/api';
 
 export default function HomePage() {
   const { haptic } = useTelegram();
@@ -156,10 +156,15 @@ export default function HomePage() {
       {/* Listings Grid */}
       <div className="px-4">
         {listings.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-tg-hint text-lg">ምንም ዕቃ አልተገኘም</p>
-            <p className="text-tg-hint text-sm mt-1">No listings found</p>
-          </div>
+          <EmptyState onSeedDemo={async () => {
+            haptic.impact('medium');
+            try {
+              await demoApi.seedListings();
+              await loadData();
+            } catch (e) {
+              console.error('Failed to seed:', e);
+            }
+          }} isAuthenticated={isAuthenticated} />
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {listings.map((listing) => (
@@ -274,6 +279,39 @@ function ListingCard({ listing, formatPrice, getTimeAgo }: ListingCardProps) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface EmptyStateProps {
+  onSeedDemo: () => Promise<void>;
+  isAuthenticated: boolean;
+}
+
+function EmptyState({ onSeedDemo, isAuthenticated }: EmptyStateProps) {
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    await onSeedDemo();
+    setSeeding(false);
+  };
+
+  return (
+    <div className="text-center py-12">
+      <p className="text-5xl mb-4">📦</p>
+      <p className="text-tg-text text-lg font-medium">ምንም ዕቃ አልተገኘም</p>
+      <p className="text-tg-hint text-sm mt-1">No listings yet</p>
+      
+      {isAuthenticated && (
+        <button
+          onClick={handleSeed}
+          disabled={seeding}
+          className="mt-6 px-6 py-3 bg-tg-button text-tg-button-text rounded-xl font-medium disabled:opacity-50"
+        >
+          {seeding ? '🔄 Loading...' : '✨ Add Demo Listings'}
+        </button>
+      )}
     </div>
   );
 }

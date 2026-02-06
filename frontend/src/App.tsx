@@ -10,8 +10,34 @@ type TabType = 'home' | 'post' | 'messages' | 'profile';
 
 function AppContent() {
   const { isLoading, isAuthenticated, error } = useAuth();
-  const { haptic } = useTelegram();
+  const { haptic, isInTelegram } = useTelegram();
   const [activeTab, setActiveTab] = useState<TabType>('home');
+
+  // Block access outside Telegram (except in dev)
+  const isDev = import.meta.env.DEV;
+  if (!isInTelegram && !isDev) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-tg-bg to-tg-secondary-bg">
+        <p className="text-6xl mb-4">🛒</p>
+        <h1 className="text-2xl font-bold text-tg-text mb-2">ገበያ</h1>
+        <p className="text-tg-hint mb-6">Ethiopian Marketplace</p>
+        <div className="bg-tg-secondary-bg p-6 rounded-2xl max-w-sm">
+          <p className="text-tg-text mb-4">
+            ይህ መተግበሪያ በቴሌግራም ብቻ ይሰራል
+          </p>
+          <p className="text-tg-hint text-sm mb-4">
+            This app only works inside Telegram
+          </p>
+          <a
+            href="https://t.me/ContactNayaBot"
+            className="inline-block px-6 py-3 bg-[#0088cc] text-white rounded-xl font-medium"
+          >
+            📱 Open in Telegram
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const handleTabChange = (tab: TabType) => {
     haptic.selection();
