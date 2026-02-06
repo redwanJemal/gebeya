@@ -155,6 +155,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // Expand to full height
       webApp.expand();
 
+      // Enable closing confirmation
+      webApp.enableClosingConfirmation();
+
       // Apply theme colors as CSS variables
       if (webApp.themeParams) {
         const root = document.documentElement;
