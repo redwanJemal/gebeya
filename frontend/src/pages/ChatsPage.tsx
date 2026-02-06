@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessageCircle, Verified, ChevronRight } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { chatsApi, type ChatListItem } from '@/lib/api';
+import { ChatListSkeleton } from '@/components/Skeleton';
 
 interface ChatsPageProps {
   onOpenChat: (chatId: string) => void;
@@ -53,8 +54,11 @@ export default function ChatsPage({ onOpenChat }: ChatsPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-tg-button border-t-transparent" />
+      <div className="min-h-screen pb-20">
+        <div className="sticky top-0 z-10 bg-tg-bg px-4 py-3 border-b border-tg-secondary-bg">
+          <h1 className="text-lg font-bold text-tg-text">💬 መልእክቶች / Messages</h1>
+        </div>
+        <ChatListSkeleton count={5} />
       </div>
     );
   }

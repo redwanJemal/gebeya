@@ -3,6 +3,7 @@ import { Search, Plus, Heart, MapPin, Verified, RefreshCw } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { categoriesApi, listingsApi, demoApi, type Category, type Listing } from '@/lib/api';
+import { ListingGridSkeleton, CategorySkeleton } from '@/components/Skeleton';
 
 interface HomePageProps {
   onOpenListing?: (listingId: string) => void;
@@ -105,8 +106,22 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-tg-button border-t-transparent" />
+      <div className="min-h-screen pb-24">
+        {/* Header skeleton */}
+        <div className="sticky top-0 z-10 bg-tg-bg px-4 py-3 border-b border-tg-secondary-bg">
+          <div className="h-10 bg-tg-secondary-bg rounded-xl animate-pulse" />
+          <div className="h-4 w-32 bg-tg-secondary-bg rounded mt-2 animate-pulse" />
+        </div>
+        
+        {/* Categories skeleton */}
+        <div className="py-3">
+          <CategorySkeleton />
+        </div>
+        
+        {/* Listings skeleton */}
+        <div className="px-4">
+          <ListingGridSkeleton count={6} />
+        </div>
       </div>
     );
   }

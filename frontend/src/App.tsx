@@ -8,12 +8,13 @@ import LoadingScreen from '@/components/LoadingScreen';
 import HomePage from '@/pages/HomePage';
 import ProfilePage from '@/pages/ProfilePage';
 import CreateListingPage from '@/pages/CreateListingPage';
+import EditListingPage from '@/pages/EditListingPage';
 import ListingDetailPage from '@/pages/ListingDetailPage';
 import ChatsPage from '@/pages/ChatsPage';
 import ChatRoomPage from '@/pages/ChatRoomPage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
-type PageType = 'main' | 'create' | 'listing' | 'chat-room';
+type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit';
 
 interface PageState {
   type: PageType;
@@ -146,6 +147,10 @@ function AppContent() {
     setPage({ type: 'chat-room', chatId });
   };
 
+  const handleEditListing = (listingId: string) => {
+    setPage({ type: 'edit', listingId });
+  };
+
   const handleBack = () => {
     setPage({ type: 'main' });
   };
@@ -183,12 +188,26 @@ function AppContent() {
     );
   }
 
+  if (page.type === 'edit' && page.listingId) {
+    return (
+      <EditListingPage
+        listingId={page.listingId}
+        onBack={handleBack}
+        onSuccess={() => {
+          handleBack();
+          setActiveTab('home');
+        }}
+      />
+    );
+  }
+
   if (page.type === 'listing' && page.listingId) {
     return (
       <ListingDetailPage
         listingId={page.listingId}
         onBack={handleBack}
         onChat={handleOpenChat}
+        onEdit={handleEditListing}
       />
     );
   }

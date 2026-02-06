@@ -7,6 +7,7 @@ import {
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { usersApi, setAccessToken } from '@/lib/api';
+import { ProfileSkeleton } from '@/components/Skeleton';
 
 interface ProfilePageProps {
   onBack?: () => void;
@@ -75,11 +76,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
   };
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-tg-hint">Loading...</p>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   return (

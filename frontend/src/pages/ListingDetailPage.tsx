@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Heart, Share2, MapPin, Clock, Eye, 
   MessageCircle, Phone, ChevronLeft, ChevronRight,
-  Verified, Flag, CheckCircle
+  Verified, Flag, CheckCircle, Pencil
 } from 'lucide-react';
 import { useTelegram } from '@/lib/telegram';
 import { useAuth } from '@/hooks/useAuth';
 import { listingsApi, type Listing } from '@/lib/api';
+import { ListingDetailSkeleton } from '@/components/Skeleton';
 
 const BOT_USERNAME = 'ContactNayaBot'; // Your bot username
 
@@ -14,6 +15,7 @@ interface ListingDetailPageProps {
   listingId: string;
   onBack: () => void;
   onChat: (listingId: string, sellerId: string) => void;
+  onEdit?: (listingId: string) => void;
 }
 
 const CONDITION_LABELS: Record<string, { am: string; en: string }> = {
@@ -23,7 +25,7 @@ const CONDITION_LABELS: Record<string, { am: string; en: string }> = {
   for_parts: { am: 'ለመለዋወጫ', en: 'For Parts' },
 };
 
-export default function ListingDetailPage({ listingId, onBack, onChat }: ListingDetailPageProps) {
+export default function ListingDetailPage({ listingId, onBack, onChat, onEdit }: ListingDetailPageProps) {
   const { haptic, webApp } = useTelegram();
   const { user } = useAuth();
   
@@ -134,11 +136,7 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-tg-bg">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-tg-button border-t-transparent" />
-      </div>
-    );
+    return <ListingDetailSkeleton />;
   }
 
   if (!listing) {
@@ -342,10 +340,14 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
           ) : (
             <div className="flex gap-3">
               <button
-                onClick={() => alert('Coming soon: Edit listing')}
-                className="flex-1 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium"
+                onClick={() => {
+                  haptic.impact('light');
+                  onEdit?.(listing.id);
+                }}
+                className="flex-1 py-3 bg-tg-secondary-bg text-tg-text rounded-xl font-medium flex items-center justify-center gap-2"
               >
-                ✏️ አስተካክል
+                <Pencil className="w-4 h-4" />
+                አስተካክል
               </button>
               <button
                 onClick={handleMarkAsSold}
@@ -355,7 +357,7 @@ export default function ListingDetailPage({ listingId, onBack, onChat }: Listing
                 {marking ? (
                   <>🔄 Processing...</>
                 ) : (
-                  <>✅ ተሸጧል / Sold</>
+                  <>✅ ተሸጧል</>
                 )}
               </button>
             </div>
