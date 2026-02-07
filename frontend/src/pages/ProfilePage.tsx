@@ -225,11 +225,13 @@ export default function ProfilePage({ onBack, onOpenMyListings, onOpenFavorites,
           label="የተወደዱ / Favorites"
           onClick={onOpenFavorites}
         />
+        {/* Hidden until transactions are implemented
         <MenuItem
           icon={<ShoppingBag className="w-5 h-5" />}
           label="ግዢዎቼ / My Purchases"
           onClick={onOpenMyPurchases}
         />
+        */}
         
         <div className="h-2" />
         
