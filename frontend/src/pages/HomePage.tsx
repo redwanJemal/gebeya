@@ -37,6 +37,8 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState('');
   const [selectedPriceRange, setSelectedPriceRange] = useState('');
+  const [customMinPrice, setCustomMinPrice] = useState('');
+  const [customMaxPrice, setCustomMaxPrice] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -66,7 +68,7 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
   useEffect(() => {
     setPage(1);
     loadListings(true);
-  }, [selectedCategory, searchQuery, selectedCondition, selectedPriceRange]);
+  }, [selectedCategory, searchQuery, selectedCondition, selectedPriceRange, customMinPrice, customMaxPrice]);
 
   const loadData = async () => {
     setLoading(true);
@@ -88,13 +90,17 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
     const currentPage = reset ? 1 : page;
     const priceRange = PRICE_RANGES.find((r) => r.value === selectedPriceRange);
     
+    // Use custom prices if set, otherwise use preset range
+    const minPrice = customMinPrice ? parseFloat(customMinPrice) : priceRange?.min;
+    const maxPrice = customMaxPrice ? parseFloat(customMaxPrice) : priceRange?.max;
+    
     try {
       const result = await listingsApi.list({
         category: selectedCategory || undefined,
         search: searchQuery || undefined,
         condition: selectedCondition || undefined,
-        min_price: priceRange?.min,
-        max_price: priceRange?.max,
+        min_price: minPrice,
+        max_price: maxPrice,
         page: currentPage,
         per_page: 12,
       });
@@ -117,14 +123,16 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
     setPage(nextPage);
     
     const priceRange = PRICE_RANGES.find((r) => r.value === selectedPriceRange);
+    const minPrice = customMinPrice ? parseFloat(customMinPrice) : priceRange?.min;
+    const maxPrice = customMaxPrice ? parseFloat(customMaxPrice) : priceRange?.max;
     
     try {
       const result = await listingsApi.list({
         category: selectedCategory || undefined,
         search: searchQuery || undefined,
         condition: selectedCondition || undefined,
-        min_price: priceRange?.min,
-        max_price: priceRange?.max,
+        min_price: minPrice,
+        max_price: maxPrice,
         page: nextPage,
         per_page: 12,
       });
@@ -148,12 +156,15 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
 
   const activeFiltersCount = 
     (selectedCondition ? 1 : 0) + 
-    (selectedPriceRange ? 1 : 0);
+    (selectedPriceRange ? 1 : 0) +
+    (customMinPrice || customMaxPrice ? 1 : 0);
 
   const clearFilters = () => {
     haptic.selection();
     setSelectedCondition('');
     setSelectedPriceRange('');
+    setCustomMinPrice('');
+    setCustomMaxPrice('');
     setShowFilters(false);
   };
 
@@ -290,7 +301,7 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
             </div>
 
             {/* Price Range Filter */}
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="text-sm font-medium text-tg-text mb-2 block">
                 ዋጋ / Price Range
               </label>
@@ -301,9 +312,12 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
                     onClick={() => {
                       haptic.selection();
                       setSelectedPriceRange(range.value);
+                      // Clear custom prices when selecting preset
+                      setCustomMinPrice('');
+                      setCustomMaxPrice('');
                     }}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      selectedPriceRange === range.value
+                      selectedPriceRange === range.value && !customMinPrice && !customMaxPrice
                         ? 'bg-tg-button text-tg-button-text'
                         : 'bg-tg-secondary-bg text-tg-text'
                     }`}
@@ -312,6 +326,45 @@ export default function HomePage({ onOpenListing }: HomePageProps) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Custom Price Range */}
+            <div className="mb-6">
+              <label className="text-sm font-medium text-tg-text mb-2 block">
+                ብጁ ዋጋ / Custom Price (ETB)
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={customMinPrice}
+                    onChange={(e) => {
+                      setCustomMinPrice(e.target.value);
+                      setSelectedPriceRange(''); // Clear preset when using custom
+                    }}
+                    className="w-full px-4 py-2.5 bg-tg-secondary-bg rounded-xl text-tg-text placeholder:text-tg-hint focus:outline-none focus:ring-2 focus:ring-tg-button"
+                  />
+                </div>
+                <span className="text-tg-hint">-</span>
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={customMaxPrice}
+                    onChange={(e) => {
+                      setCustomMaxPrice(e.target.value);
+                      setSelectedPriceRange(''); // Clear preset when using custom
+                    }}
+                    className="w-full px-4 py-2.5 bg-tg-secondary-bg rounded-xl text-tg-text placeholder:text-tg-hint focus:outline-none focus:ring-2 focus:ring-tg-button"
+                  />
+                </div>
+              </div>
+              {(customMinPrice || customMaxPrice) && (
+                <p className="text-xs text-tg-hint mt-2">
+                  {customMinPrice || '0'} - {customMaxPrice || '∞'} ብር
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}

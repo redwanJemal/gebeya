@@ -74,6 +74,10 @@ export const usersApi = {
       body: JSON.stringify({ settings }),
     }),
   
+  // Seller profile
+  getSellerProfile: (userId: string) =>
+    request<SellerProfileResponse>(`/users/${userId}/profile`),
+  
   // Passcode
   setPasscode: (passcode: string) =>
     request<{ success: boolean }>('/users/me/passcode', {
@@ -195,6 +199,40 @@ export interface SellerInfo {
   rating: number;
   total_sales: number;
   member_since: string;
+}
+
+export interface SellerPublicProfile {
+  id: string;
+  name: string;
+  username: string | null;
+  photo_url: string | null;
+  is_verified: boolean;
+  is_premium: boolean;
+  rating: number;
+  total_sales: number;
+  total_listings: number;
+  city: string;
+  area: string | null;
+  member_since: string;
+}
+
+export interface SellerListingItem {
+  id: string;
+  title: string;
+  price: number;
+  currency: string;
+  condition: string;
+  images: string[];
+  city: string;
+  area: string | null;
+  created_at: string;
+  is_featured: boolean;
+}
+
+export interface SellerProfileResponse {
+  seller: SellerPublicProfile;
+  listings: SellerListingItem[];
+  total_listings: number;
 }
 
 export interface Listing {

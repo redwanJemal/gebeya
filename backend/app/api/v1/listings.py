@@ -195,11 +195,22 @@ async def create_listing(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new listing. User must be phone verified."""
+    from app.core.telegraph import process_images
+    
     if not user.is_phone_verified:
         raise HTTPException(
             status_code=403,
             detail="ስልክ ቁጥርዎን ያረጋግጡ / Please verify your phone number to post listings"
         )
+    
+    # Upload images to Telegraph (converts base64 to permanent URLs)
+    processed_images = []
+    if body.images:
+        try:
+            processed_images = await process_images(body.images)
+        except Exception as e:
+            print(f"Image processing error: {e}")
+            # Continue without images if upload fails
     
     # Normalize condition to lowercase
     condition_value = body.condition.value if hasattr(body.condition, 'value') else str(body.condition).lower()
@@ -214,7 +225,7 @@ async def create_listing(
         is_negotiable=body.is_negotiable,
         city=body.city,
         area=body.area,
-        images=body.images,
+        images=processed_images,
         status="active",
         expires_at=datetime.now(UTC) + timedelta(days=30),
     )
@@ -404,6 +415,8 @@ async def update_listing(
     db: AsyncSession = Depends(get_db),
 ):
     """Update a listing (owner only)."""
+    from app.core.telegraph import process_images
+    
     result = await db.execute(
         select(Listing).where(Listing.id == listing_id)
     )
@@ -415,8 +428,16 @@ async def update_listing(
     if listing.user_id != user.id:
         raise HTTPException(status_code=403, detail="Not your listing")
     
+    # Process images through Telegraph if provided
+    update_data = body.model_dump(exclude_unset=True)
+    if 'images' in update_data and update_data['images']:
+        try:
+            update_data['images'] = await process_images(update_data['images'])
+        except Exception as e:
+            print(f"Image processing error: {e}")
+    
     # Update fields
-    for field, value in body.model_dump(exclude_unset=True).items():
+    for field, value in update_data.items():
         setattr(listing, field, value)
     
     # Handle sold status
