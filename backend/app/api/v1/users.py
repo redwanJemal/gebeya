@@ -2,13 +2,18 @@
 
 import hashlib
 from datetime import UTC, datetime
+from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
 from app.core.config import settings
+from app.core.database import get_db
 from app.models.user import User
+from app.models.listing import Listing, ListingStatus
 
 
 def hash_passcode(passcode: str, salt: str) -> str:
@@ -217,4 +222,102 @@ async def remove_passcode(
     return PasscodeResponse(
         success=True,
         message="Passcode removed"
+    )
+
+
+# --- Public Seller Profile ---
+
+class SellerPublicProfile(BaseModel):
+    """Public seller profile."""
+    id: str
+    name: str
+    username: str | None
+    photo_url: str | None
+    is_verified: bool
+    is_premium: bool
+    rating: float
+    total_sales: int
+    total_listings: int
+    city: str
+    area: str | None
+    member_since: str
+
+
+class ListingItem(BaseModel):
+    """Listing item in seller profile."""
+    id: str
+    title: str
+    price: float
+    currency: str
+    condition: str
+    images: list[str]
+    city: str
+    area: str | None
+    created_at: str
+    is_featured: bool
+
+
+class SellerProfileResponse(BaseModel):
+    """Seller profile with listings."""
+    seller: SellerPublicProfile
+    listings: list[ListingItem]
+    total_listings: int
+
+
+@router.get("/{user_id}/profile", response_model=SellerProfileResponse)
+async def get_seller_profile(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a seller's public profile and their active listings."""
+    # Get seller
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    seller = result.scalar_one_or_none()
+    
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+    
+    # Get seller's active listings
+    listings_result = await db.execute(
+        select(Listing)
+        .where(Listing.user_id == user_id)
+        .where(Listing.status == ListingStatus.active)
+        .order_by(Listing.is_featured.desc(), Listing.created_at.desc())
+        .limit(50)
+    )
+    listings = listings_result.scalars().all()
+    
+    return SellerProfileResponse(
+        seller=SellerPublicProfile(
+            id=str(seller.id),
+            name=seller.display_name,
+            username=seller.username,
+            photo_url=seller.photo_url,
+            is_verified=seller.is_verified_seller,
+            is_premium=seller.is_premium,
+            rating=seller.rating,
+            total_sales=seller.total_sales,
+            total_listings=seller.total_listings,
+            city=seller.city,
+            area=seller.area,
+            member_since=seller.created_at.strftime("%b %Y"),
+        ),
+        listings=[
+            ListingItem(
+                id=str(l.id),
+                title=l.title,
+                price=l.price,
+                currency=l.currency,
+                condition=l.condition.value,
+                images=l.images or [],
+                city=l.city,
+                area=l.area,
+                created_at=l.created_at.isoformat(),
+                is_featured=l.is_featured,
+            )
+            for l in listings
+        ],
+        total_listings=len(listings),
     )

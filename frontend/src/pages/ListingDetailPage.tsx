@@ -16,6 +16,7 @@ interface ListingDetailPageProps {
   onBack: () => void;
   onChat: (listingId: string, sellerId: string) => void;
   onEdit?: (listingId: string) => void;
+  onOpenSellerProfile?: (sellerId: string) => void;
 }
 
 const CONDITION_LABELS: Record<string, { am: string; en: string }> = {
@@ -25,7 +26,7 @@ const CONDITION_LABELS: Record<string, { am: string; en: string }> = {
   for_parts: { am: 'ለመለዋወጫ', en: 'For Parts' },
 };
 
-export default function ListingDetailPage({ listingId, onBack, onChat, onEdit }: ListingDetailPageProps) {
+export default function ListingDetailPage({ listingId, onBack, onChat, onEdit, onOpenSellerProfile }: ListingDetailPageProps) {
   const { haptic, webApp } = useTelegram();
   const { user } = useAuth();
   
@@ -279,8 +280,17 @@ export default function ListingDetailPage({ listingId, onBack, onChat, onEdit }:
 
         {/* Seller Info */}
         {listing.seller && (
-          <div className="bg-tg-secondary-bg p-4 rounded-xl">
-            <h3 className="font-medium text-tg-text mb-3">ሻጭ / Seller</h3>
+          <button
+            onClick={() => {
+              haptic.selection();
+              onOpenSellerProfile?.(listing.seller!.id);
+            }}
+            className="w-full bg-tg-secondary-bg p-4 rounded-xl text-left active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-tg-text">ሻጭ / Seller</h3>
+              <span className="text-tg-link text-sm">View Profile →</span>
+            </div>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-tg-button rounded-full flex items-center justify-center text-tg-button-text font-bold">
                 {listing.seller.name[0]}
@@ -297,7 +307,7 @@ export default function ListingDetailPage({ listingId, onBack, onChat, onEdit }:
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         {/* Report */}

@@ -17,14 +17,16 @@ import ChatRoomPage from '@/pages/ChatRoomPage';
 import MyListingsPage from '@/pages/MyListingsPage';
 import FavoritesPage from '@/pages/FavoritesPage';
 import MyPurchasesPage from '@/pages/MyPurchasesPage';
+import SellerProfilePage from '@/pages/SellerProfilePage';
 
 type TabType = 'home' | 'post' | 'messages' | 'profile';
-type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit' | 'my-listings' | 'favorites' | 'my-purchases';
+type PageType = 'main' | 'create' | 'listing' | 'chat-room' | 'edit' | 'my-listings' | 'favorites' | 'my-purchases' | 'seller-profile';
 
 interface PageState {
   type: PageType;
   listingId?: string;
   chatId?: string;
+  sellerId?: string;
 }
 
 function AppContent() {
@@ -189,6 +191,10 @@ function AppContent() {
     setPage({ type: 'my-purchases' });
   };
 
+  const handleOpenSellerProfile = (sellerId: string) => {
+    setPage({ type: 'seller-profile', sellerId });
+  };
+
   const handleBack = () => {
     setPage({ type: 'main' });
   };
@@ -260,6 +266,16 @@ function AppContent() {
     );
   }
 
+  if (page.type === 'seller-profile' && page.sellerId) {
+    return (
+      <SellerProfilePage
+        sellerId={page.sellerId}
+        onBack={handleBack}
+        onOpenListing={handleOpenListing}
+      />
+    );
+  }
+
   if (page.type === 'edit' && page.listingId) {
     return (
       <EditListingPage
@@ -280,6 +296,7 @@ function AppContent() {
         onBack={handleBack}
         onChat={handleOpenChat}
         onEdit={handleEditListing}
+        onOpenSellerProfile={handleOpenSellerProfile}
       />
     );
   }
