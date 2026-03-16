@@ -37,6 +37,7 @@ services:
 
   # FastAPI Backend
   backend:
+    image: ${CI_REGISTRY_IMAGE:-gebeya}/backend:${IMAGE_TAG:-latest}
     build: ./backend
     container_name: ministack-backend
     restart: unless-stopped
@@ -61,6 +62,7 @@ services:
 
   # React Frontend
   frontend:
+    image: ${CI_REGISTRY_IMAGE:-gebeya}/frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       args:
